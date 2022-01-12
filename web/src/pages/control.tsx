@@ -57,7 +57,7 @@ const Proxy = () => {
     const ws = new WebSocket(
       `${
         process.env.NODE_ENV === "production"
-          ? "wss://remoteftc.lavallee.one"
+          ? "wss://remoteftc-api.lavallee.one"
           : "ws://localhost:4000"
       }/custom`
     );
