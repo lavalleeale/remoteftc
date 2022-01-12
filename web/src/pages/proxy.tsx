@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 const Control = () => {
   const [robotStatus, setRobotStatus] = useState(false);
   const [serverStatus, setServerStatus] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [ws, setWs] = useState<WebSocket | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [robotWs, setRobotWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
