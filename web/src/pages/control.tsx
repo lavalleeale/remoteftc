@@ -1,10 +1,13 @@
-import { Paper, Typography } from "@mui/material";
-import { useState, useEffect } from "react";
+import { Button, Paper, TextField, Typography } from "@mui/material";
+import React, { useState, useEffect } from "react";
 
 const Proxy = () => {
   const [gamepad1, setGamepad1] = useState<number | null>(null);
   const [gamepad2, setGamepad2] = useState<number | null>(null);
+  const [roomCode, setRoomCode] = useState(111111);
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const [wsStatus, setWsStatus] = useState(false);
+  const [watcherCount, setWatcherCount] = useState<number | null>(null);
 
   useEffect(() => {
     const removeGamepad = (e: GamepadEventInit) => {
@@ -35,10 +38,6 @@ const Proxy = () => {
             }
             setGamepad2(gamepad.index);
           } else {
-            console.log(ws?.OPEN);
-            if (ws) {
-              ws.send("d");
-            }
             console.log(
               Object.values(navigator.getGamepads()).find(
                 (gamepad) => gamepad?.index === gamepad2
@@ -61,34 +60,78 @@ const Proxy = () => {
           : "ws://localhost:4000"
       }/custom`
     );
-    ws.addEventListener("open", function (event) {
-      console.log("test");
+    ws.addEventListener("open", () => {
+      setWsStatus(true);
+    });
+    ws.addEventListener("message", function (event) {
+      console.log(event.data);
+      const data = JSON.parse(event.data);
+      switch (data.type) {
+        case "watcherCount":
+          setWatcherCount(data.value);
+          break;
+        default:
+          break;
+      }
     });
     setWs(ws);
     return () => {
       ws.close();
       setWs(null);
+      setWsStatus(false);
     };
   }, []);
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    ws?.send(JSON.stringify({ type: "joinroom", roomcode: roomCode }));
+  }
 
   return (
     <div>
       <Paper sx={{ ml: 10, mr: 10, p: 1 }}>
-        <Typography>
-          {`Gamepad1: ${
-            Object.values(navigator.getGamepads()).find(
-              (gamepad) => gamepad?.index === gamepad1
-            )?.id || "Gamepad 1 Not Connected"
-          }`}
-        </Typography>
-        <Typography>
-          {`Gamepad2: ${
-            Object.values(navigator.getGamepads()).find(
-              (gamepad) => gamepad?.index === gamepad2
-            )?.id || "Gamepad 2 Not Connected"
-          }`}
-          {}
-        </Typography>
+        {!watcherCount ? (
+          <form onSubmit={onSubmit}>
+            <TextField
+              label="Room Code"
+              required
+              disabled={!wsStatus}
+              type="number"
+              value={roomCode}
+              error={roomCode.toString().length !== 6}
+              helperText={
+                roomCode.toString().length !== 6 && "Must Be Exactly 6 Digits"
+              }
+              onChange={(e) => setRoomCode(parseInt(e.target.value, 10))}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{ m: 1 }}
+              disabled={!wsStatus}
+            >
+              Submit
+            </Button>
+          </form>
+        ) : (
+          <>
+            <Typography>Watch Count: {watcherCount}</Typography>
+            <Typography>
+              {`Gamepad1: ${
+                Object.values(navigator.getGamepads()).find(
+                  (gamepad) => gamepad?.index === gamepad1
+                )?.id || "Gamepad 1 Not Connected"
+              }`}
+            </Typography>
+            <Typography>
+              {`Gamepad2: ${
+                Object.values(navigator.getGamepads()).find(
+                  (gamepad) => gamepad?.index === gamepad2
+                )?.id || "Gamepad 2 Not Connected"
+              }`}
+            </Typography>
+          </>
+        )}
       </Paper>
     </div>
   );

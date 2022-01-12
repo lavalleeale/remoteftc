@@ -3,7 +3,10 @@ import { useEffect, useState } from "react";
 
 const Control = () => {
   const [robotStatus, setRobotStatus] = useState(false);
+  const [watcherCount, setWatcherCount] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [serverStatus, setServerStatus] = useState(false);
+  const [roomCode, setRoomCode] = useState<number | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [ws, setWs] = useState<WebSocket | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -19,7 +22,17 @@ const Control = () => {
     );
     const robot = new WebSocket("ws://192.168.43.1:8000/");
     ws.addEventListener("message", function (event) {
-      console.log("Message from server ", event.data);
+      const data = JSON.parse(event.data);
+      switch (data.type) {
+        case "roomcode":
+          setRoomCode(data.value);
+          break;
+        case "watcherCount":
+          setWatcherCount(data.value);
+          break;
+        default:
+          break;
+      }
     });
     robot.addEventListener("message", function (event) {
       console.log("Message from robot ", JSON.parse(event.data));
@@ -44,9 +57,8 @@ const Control = () => {
   return (
     <div>
       <Paper sx={{ ml: 10, mr: 10, p: 1 }}>
-        <Typography>
-          Server Status: {serverStatus ? "Connected" : "Disconnected"}
-        </Typography>
+        <Typography>Room Code: {roomCode || "Room Code Not Found"}</Typography>
+        <Typography>Watch Count: {watcherCount}</Typography>
         <Typography>
           Robot Status: {robotStatus ? "Connected" : "Disconnected"}
         </Typography>
