@@ -3,7 +3,11 @@ name: Test
 on: [push, pull_request]
 
 jobs:
-  release:
+  electron:
+    defaults:
+      run:
+        shell: bash
+        working-directory: web
     runs-on: ${{ matrix.os }}
 
     strategy:
