@@ -4,13 +4,7 @@ import { useEffect, useState } from "react";
 const Control = () => {
   const [robotStatus, setRobotStatus] = useState(false);
   const [watcherCount, setWatcherCount] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [serverStatus, setServerStatus] = useState(false);
   const [roomCode, setRoomCode] = useState<number | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [ws, setWs] = useState<WebSocket | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [robotWs, setRobotWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
     const ws = new WebSocket(
@@ -35,22 +29,19 @@ const Control = () => {
       }
     });
     robot.addEventListener("message", function (event) {
-      console.log("Message from robot ", JSON.parse(event.data));
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(event.data);
+      }
     });
     ws.addEventListener("open", () => {
-      setServerStatus(true);
       ws.send("proxy");
     });
     robot.addEventListener("open", function (event) {
       setRobotStatus(true);
     });
-    setWs(ws);
-    setRobotWs(robot);
     return () => {
       ws.close();
       robot.close();
-      setRobotWs(null);
-      setWs(null);
     };
   }, []);
 

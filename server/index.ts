@@ -73,6 +73,8 @@ wss.on("connection", (ws: MyWebSocket) => {
             )
           );
         }
+      } else if (ws.watchers) {
+        ws.watchers.map((watcher) => watcher.send(message));
       }
     }
   });

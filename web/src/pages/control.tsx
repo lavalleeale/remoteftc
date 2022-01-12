@@ -64,11 +64,13 @@ const Proxy = () => {
       setWsStatus(true);
     });
     ws.addEventListener("message", function (event) {
-      console.log(event.data);
       const data = JSON.parse(event.data);
       switch (data.type) {
         case "watcherCount":
           setWatcherCount(data.value);
+          break;
+        case "RECEIVE_ROBOT_STATUS":
+          console.log(data);
           break;
         default:
           break;
