@@ -6,6 +6,7 @@ declare class MyWebSocket extends WebSocket {
   code: number | null;
   uuid: string;
   proxyuuid: string | null;
+  opmodes: string[] | null;
 }
 
 const wss = new Server({ port: 4000 });
@@ -57,6 +58,7 @@ wss.on("connection", (ws: MyWebSocket) => {
         );
         if (proxy) {
           ws.proxyuuid = proxy.uuid;
+          ws.send(JSON.stringify({ type: "opmodes", value: proxy.opmodes }));
           proxy.watchers!.push(ws);
           proxy.send(
             JSON.stringify({
@@ -73,6 +75,9 @@ wss.on("connection", (ws: MyWebSocket) => {
             )
           );
         }
+      } else if (genericData.type === "RECEIVE_OP_MODE_LIST") {
+        const data = genericData as opmodes;
+        ws.opmodes = data.opModeList;
       } else if (ws.watchers) {
         ws.watchers.map((watcher) => watcher.send(message));
       } else if (ws.proxyuuid) {
@@ -84,12 +89,12 @@ wss.on("connection", (ws: MyWebSocket) => {
     }
   });
 });
-type clientToServer = joinRoom | test;
+type clientToServer = joinRoom | opmodes;
 type joinRoom = {
   type: "joinroom";
   roomcode: number;
 };
-type test = {
-  type: "";
-  value: string;
+type opmodes = {
+  type: "RECEIVE_OP_MODE_LIST";
+  opModeList: string[];
 };

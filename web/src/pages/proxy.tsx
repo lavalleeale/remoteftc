@@ -2,11 +2,12 @@ import { Paper, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 
 const Control = () => {
-  const [robotStatus, setRobotStatus] = useState(false);
   const [watcherCount, setWatcherCount] = useState(0);
   const [roomCode, setRoomCode] = useState<number | null>(null);
+  const [robotStatus, setRobotStatus] = useState(false);
 
   useEffect(() => {
+    var robot: WebSocket | null;
     const ws = new WebSocket(
       `${
         process.env.NODE_ENV === "production"
@@ -14,7 +15,6 @@ const Control = () => {
           : "ws://localhost:4000"
       }/custom`
     );
-    const robot = new WebSocket("ws://192.168.43.1:8000/");
     ws.addEventListener("message", function (event) {
       const data = JSON.parse(event.data);
       switch (data.type) {
@@ -25,31 +25,31 @@ const Control = () => {
           setWatcherCount(data.value);
           break;
         default:
-          if (robot.readyState === WebSocket.OPEN) {
-            robot.send(event.data);
+          if (robot?.readyState === WebSocket.OPEN) {
+            robot!.send(event.data);
           }
           break;
       }
     });
-    robot.addEventListener("message", function (event) {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(event.data);
-      }
-    });
     ws.addEventListener("open", () => {
       ws.send("proxy");
-    });
-    robot.addEventListener("open", function (event) {
-      setRobotStatus(true);
+      robot = new WebSocket("ws://192.168.43.1:8000/");
+      robot.addEventListener("open", function (event) {
+        setRobotStatus(true);
+      });
+      robot.addEventListener("message", function (event) {
+        ws!.send(event.data);
+      });
     });
     const interval = setInterval(() => {
-      if (robot.readyState === WebSocket.OPEN) {
-        robot.send(JSON.stringify({ type: "GET_ROBOT_STATUS" }));
+      if (robot?.readyState === WebSocket.OPEN) {
+        robot!.send(JSON.stringify({ type: "GET_ROBOT_STATUS" }));
       }
     }, 100);
     return () => {
       ws.close();
-      robot.close();
+      robot?.close();
+      setRobotStatus(false);
       clearInterval(interval);
     };
   }, []);

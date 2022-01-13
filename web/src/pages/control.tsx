@@ -1,5 +1,38 @@
-import { Button, Paper, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  TextField,
+  Typography,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
+
+const emptyController = {
+  left_stick_x: 0,
+  left_stick_y: 0,
+  right_stick_x: 0,
+  right_stick_y: 0,
+  dpad_up: false,
+  dpad_down: false,
+  dpad_left: false,
+  dpad_right: false,
+  a: false,
+  b: false,
+  x: false,
+  y: false,
+  guide: false,
+  start: false,
+  back: false,
+  left_bumper: false,
+  right_bumper: false,
+  left_stick_button: false,
+  right_stick_button: false,
+  left_trigger: 0,
+  right_trigger: 0,
+} as controller;
 
 type controller = {
   left_stick_x: number;
@@ -56,9 +89,21 @@ function controllerFromGamepad(gamepad: Gamepad) {
   } as controller;
 }
 
+type robotStatus = {
+  activeOpMode: string;
+  activeOpModeStatus: "RUNNING" | "INIT";
+  errorMessage: string;
+  warningMessage: string;
+};
+
 const Proxy = () => {
   const [gamepad1, setGamepad1] = useState<number | null>(null);
   const [gamepad2, setGamepad2] = useState<number | null>(null);
+  const [opmodes, setOpmodes] = useState<string[] | null>(null);
+  const [robotStatus, setRobotStatus] = useState<robotStatus | null>(null);
+  const [selectedOpmode, setSelectedOpmode] = useState("");
+  const [controller1, setController1] = useState(emptyController);
+  const [controller2, setController2] = useState(emptyController);
   const [roomCode, setRoomCode] = useState(111111);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [wsStatus, setWsStatus] = useState(false);
@@ -84,48 +129,26 @@ const Proxy = () => {
         if (gamepad) {
           if (gamepad.buttons[9].pressed && gamepad.buttons[0].pressed) {
             if (gamepad.index === gamepad2) {
+              setController2(emptyController);
               setGamepad2(null);
             }
             setGamepad1(gamepad.index);
           } else if (gamepad.buttons[9].pressed && gamepad.buttons[1].pressed) {
             if (gamepad.index === gamepad1) {
               setGamepad1(null);
+              setController1(emptyController);
             }
             setGamepad2(gamepad.index);
           } else {
-            var tempController1 = {
-                left_stick_x: 0,
-                left_stick_y: 0,
-                right_stick_x: 0,
-                right_stick_y: 0,
-                dpad_up: false,
-                dpad_down: false,
-                dpad_left: false,
-                dpad_right: false,
-                a: false,
-                b: false,
-                x: false,
-                y: false,
-                guide: false,
-                start: false,
-                back: false,
-                left_bumper: false,
-                right_bumper: false,
-                left_stick_button: false,
-                right_stick_button: false,
-                left_trigger: 0,
-                right_trigger: 0,
-              } as controller,
-              tempController2 = tempController1;
             if (gamepad.index === gamepad1) {
-              tempController1 = controllerFromGamepad(gamepad);
+              setController1(controllerFromGamepad(gamepad));
             } else if (gamepad.index === gamepad2) {
-              tempController2 = controllerFromGamepad(gamepad);
+              setController2(controllerFromGamepad(gamepad));
             }
             const controllersPacket: controllers = {
               type: "RECEIVE_GAMEPAD_STATE",
-              gamepad1: tempController1,
-              gamepad2: tempController2,
+              gamepad1: controller1,
+              gamepad2: controller2,
             };
             if (ws?.readyState === WebSocket.OPEN) {
               ws!.send(JSON.stringify(controllersPacket));
@@ -137,7 +160,7 @@ const Proxy = () => {
     return () => {
       clearInterval(interval);
     };
-  }, [gamepad1, gamepad2, ws]);
+  }, [gamepad1, gamepad2, ws, controller1, controller2]);
 
   useEffect(() => {
     const ws = new WebSocket(
@@ -157,7 +180,10 @@ const Proxy = () => {
           setWatcherCount(data.value);
           break;
         case "RECEIVE_ROBOT_STATUS":
-          console.log(data);
+          setRobotStatus(data.status);
+          break;
+        case "opmodes":
+          setOpmodes(data.value);
           break;
         default:
           break;
@@ -174,6 +200,13 @@ const Proxy = () => {
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     ws?.send(JSON.stringify({ type: "joinroom", roomcode: roomCode }));
+  }
+
+  function initOpmode(e: React.FormEvent) {
+    e.preventDefault();
+    ws?.send(
+      JSON.stringify({ type: "INIT_OP_MODE", opModeName: selectedOpmode })
+    );
   }
 
   return (
@@ -204,6 +237,56 @@ const Proxy = () => {
           </form>
         ) : (
           <>
+            {robotStatus === null ||
+            robotStatus?.activeOpMode === "$Stop$Robot$" ? (
+              <form onSubmit={initOpmode}>
+                <FormControl
+                  disabled={opmodes === undefined}
+                  sx={{ width: "50%" }}
+                >
+                  <InputLabel id="opmode-select-label">Opmode</InputLabel>
+                  <Select
+                    labelId="opmode-select-label"
+                    id="opmode-select"
+                    value={selectedOpmode}
+                    label="Opmode"
+                    onChange={(e) => {
+                      setSelectedOpmode(e.target.value);
+                    }}
+                  >
+                    {[...(opmodes || []), "$Stop$Robot$"].map((opmode) => (
+                      <MenuItem value={opmode} key={opmode}>
+                        {opmode === "$Stop$Robot$" ? "None" : opmode}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  sx={{ m: 1 }}
+                  disabled={
+                    selectedOpmode === "$Stop$Robot$" || opmodes === undefined
+                  }
+                >
+                  Init
+                </Button>
+              </form>
+            ) : (
+              <Button
+                variant="contained"
+                sx={{ m: 1 }}
+                color={
+                  robotStatus?.activeOpModeStatus === "RUNNING"
+                    ? "error"
+                    : "success"
+                }
+              >
+                {robotStatus?.activeOpModeStatus === "RUNNING"
+                  ? "stop"
+                  : "start"}
+              </Button>
+            )}
             <Typography>Watch Count: {watcherCount}</Typography>
             <Typography>
               {`Gamepad1: ${
