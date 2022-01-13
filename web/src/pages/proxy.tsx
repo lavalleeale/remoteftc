@@ -25,6 +25,9 @@ const Control = () => {
           setWatcherCount(data.value);
           break;
         default:
+          if (robot.readyState === WebSocket.OPEN) {
+            robot.send(event.data);
+          }
           break;
       }
     });
@@ -39,9 +42,15 @@ const Control = () => {
     robot.addEventListener("open", function (event) {
       setRobotStatus(true);
     });
+    const interval = setInterval(() => {
+      if (robot.readyState === WebSocket.OPEN) {
+        robot.send(JSON.stringify({ type: "GET_ROBOT_STATUS" }));
+      }
+    }, 100);
     return () => {
       ws.close();
       robot.close();
+      clearInterval(interval);
     };
   }, []);
 

@@ -75,6 +75,11 @@ wss.on("connection", (ws: MyWebSocket) => {
         }
       } else if (ws.watchers) {
         ws.watchers.map((watcher) => watcher.send(message));
+      } else if (ws.proxyuuid) {
+        const proxy = [...(wss.clients as Set<MyWebSocket>)].find(
+          (socket) => socket.uuid == ws.proxyuuid
+        );
+        proxy?.send(message);
       }
     }
   });

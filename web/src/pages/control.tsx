@@ -1,6 +1,61 @@
 import { Button, Paper, TextField, Typography } from "@mui/material";
 import React, { useState, useEffect } from "react";
 
+type controller = {
+  left_stick_x: number;
+  left_stick_y: number;
+  right_stick_x: number;
+  right_stick_y: number;
+  dpad_up: boolean;
+  dpad_down: boolean;
+  dpad_left: boolean;
+  dpad_right: boolean;
+  a: boolean;
+  b: boolean;
+  x: boolean;
+  y: boolean;
+  guide: boolean;
+  start: boolean;
+  back: boolean;
+  left_bumper: boolean;
+  right_bumper: boolean;
+  left_stick_button: boolean;
+  right_stick_button: boolean;
+  left_trigger: number;
+  right_trigger: number;
+};
+type controllers = {
+  type: "RECEIVE_GAMEPAD_STATE";
+  gamepad1: controller;
+  gamepad2: controller;
+};
+
+function controllerFromGamepad(gamepad: Gamepad) {
+  return {
+    left_stick_x: gamepad.axes[0],
+    left_stick_y: gamepad.axes[1],
+    right_stick_x: gamepad.axes[2],
+    right_stick_y: gamepad.axes[3],
+    dpad_up: gamepad.buttons[12].pressed,
+    dpad_down: gamepad.buttons[13].pressed,
+    dpad_left: gamepad.buttons[14].pressed,
+    dpad_right: gamepad.buttons[15].pressed,
+    a: gamepad.buttons[0].pressed,
+    b: gamepad.buttons[1].pressed,
+    x: gamepad.buttons[2].pressed,
+    y: gamepad.buttons[3].pressed,
+    guide: gamepad.buttons[16].pressed,
+    start: gamepad.buttons[9].pressed,
+    back: gamepad.buttons[8].pressed,
+    left_bumper: gamepad.buttons[4].pressed,
+    right_bumper: gamepad.buttons[5].pressed,
+    left_stick_button: gamepad.buttons[10].pressed,
+    right_stick_button: gamepad.buttons[11].pressed,
+    left_trigger: gamepad.buttons[6].pressed ? 1 : 0,
+    right_trigger: gamepad.buttons[7].pressed ? 1 : 0,
+  } as controller;
+}
+
 const Proxy = () => {
   const [gamepad1, setGamepad1] = useState<number | null>(null);
   const [gamepad2, setGamepad2] = useState<number | null>(null);
@@ -38,15 +93,47 @@ const Proxy = () => {
             }
             setGamepad2(gamepad.index);
           } else {
-            console.log(
-              Object.values(navigator.getGamepads()).find(
-                (gamepad) => gamepad?.index === gamepad2
-              )?.buttons
-            );
+            var tempController1 = {
+                left_stick_x: 0,
+                left_stick_y: 0,
+                right_stick_x: 0,
+                right_stick_y: 0,
+                dpad_up: false,
+                dpad_down: false,
+                dpad_left: false,
+                dpad_right: false,
+                a: false,
+                b: false,
+                x: false,
+                y: false,
+                guide: false,
+                start: false,
+                back: false,
+                left_bumper: false,
+                right_bumper: false,
+                left_stick_button: false,
+                right_stick_button: false,
+                left_trigger: 0,
+                right_trigger: 0,
+              } as controller,
+              tempController2 = tempController1;
+            if (gamepad.index === gamepad1) {
+              tempController1 = controllerFromGamepad(gamepad);
+            } else if (gamepad.index === gamepad2) {
+              tempController2 = controllerFromGamepad(gamepad);
+            }
+            const controllersPacket: controllers = {
+              type: "RECEIVE_GAMEPAD_STATE",
+              gamepad1: tempController1,
+              gamepad2: tempController2,
+            };
+            if (ws?.readyState === WebSocket.OPEN) {
+              ws!.send(JSON.stringify(controllersPacket));
+            }
           }
         }
       });
-    }, 100);
+    }, 10);
     return () => {
       clearInterval(interval);
     };
