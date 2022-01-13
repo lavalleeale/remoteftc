@@ -274,6 +274,17 @@ const Proxy = () => {
               </form>
             ) : (
               <Button
+                onClick={() => {
+                  ws!.send(
+                    JSON.stringify({
+                      type: `${
+                        robotStatus?.activeOpModeStatus === "RUNNING"
+                          ? "STOP"
+                          : "START"
+                      }_OP_MODE`,
+                    })
+                  );
+                }}
                 variant="contained"
                 sx={{ m: 1 }}
                 color={
