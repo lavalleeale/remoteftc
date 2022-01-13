@@ -9,11 +9,13 @@ const Header = () => {
         <Link to="/" style={{ flexGrow: 1 }}>
           <Typography>Remote FTC Control</Typography>
         </Link>
-        <Link to="/proxy">
-          <IconButton>
-            <DeviceHub />
-          </IconButton>
-        </Link>
+        {navigator.userAgent.match("Electron") && (
+          <Link to="/proxy">
+            <IconButton>
+              <DeviceHub />
+            </IconButton>
+          </Link>
+        )}
         <Link to="/control">
           <IconButton>
             <SportsEsports />
