@@ -1,5 +1,6 @@
 import { Paper, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
+import ReconnectingWebSocket from "reconnecting-websocket";
 import { emptyController } from "../shared/controller";
 
 const Control = () => {
@@ -8,8 +9,8 @@ const Control = () => {
   const [robotStatus, setRobotStatus] = useState(false);
 
   useEffect(() => {
-    var robot: WebSocket | null;
-    var robotControl: WebSocket | null;
+    var robot: ReconnectingWebSocket | null;
+    var robotControl: ReconnectingWebSocket | null;
     var controller1 = emptyController;
     var controller2 = emptyController;
     const ws = new WebSocket(
@@ -39,7 +40,10 @@ const Control = () => {
           if (robot?.readyState === WebSocket.OPEN) {
             robot!.send(event.data);
           }
-          robotControl = new WebSocket("ws://192.168.43.1:6969");
+          robotControl = new ReconnectingWebSocket("ws://192.168.43.1:6969");
+          break;
+        case "STOP_OP_MODE":
+          robotControl = null;
           break;
         default:
           if (robot?.readyState === WebSocket.OPEN) {
@@ -50,7 +54,7 @@ const Control = () => {
     });
     ws.addEventListener("open", () => {
       ws.send("proxy");
-      robot = new WebSocket("ws://192.168.43.1:8000/");
+      robot = new ReconnectingWebSocket("ws://192.168.43.1:8000/");
       robot.addEventListener("open", function (event) {
         setRobotStatus(true);
       });
