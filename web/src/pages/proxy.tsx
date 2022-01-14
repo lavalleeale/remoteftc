@@ -1,5 +1,6 @@
 import { Paper, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
+import { emptyController } from "../shared/controller";
 
 const Control = () => {
   const [watcherCount, setWatcherCount] = useState(0);
@@ -8,6 +9,9 @@ const Control = () => {
 
   useEffect(() => {
     var robot: WebSocket | null;
+    var robotControl: WebSocket | null;
+    var controller1 = emptyController;
+    var controller2 = emptyController;
     const ws = new WebSocket(
       `${
         process.env.NODE_ENV === "production"
@@ -23,6 +27,19 @@ const Control = () => {
           break;
         case "watcherCount":
           setWatcherCount(data.value);
+          break;
+        case "controller":
+          if (data.number === 1) {
+            controller1 = data.data;
+          } else {
+            controller2 = data.data;
+          }
+          break;
+        case "INIT_OP_MODE":
+          if (robot?.readyState === WebSocket.OPEN) {
+            robot!.send(event.data);
+          }
+          robotControl = new WebSocket("ws://192.168.43.1:6969");
           break;
         default:
           if (robot?.readyState === WebSocket.OPEN) {
@@ -41,10 +58,22 @@ const Control = () => {
         ws!.send(event.data);
       });
     });
-    const interval = setInterval(() => {
-      if (robot?.readyState === WebSocket.OPEN) {
-        robot!.send(JSON.stringify({ type: "GET_ROBOT_STATUS" }));
-      }
+    var interval: NodeJS.Timer;
+    setTimeout(() => {
+      interval = setInterval(() => {
+        if (robot?.readyState === WebSocket.OPEN) {
+          robot!.send(JSON.stringify({ type: "GET_ROBOT_STATUS" }));
+          if (robotControl?.readyState === WebSocket.OPEN) {
+            robotControl.send(
+              JSON.stringify({
+                type: "RECEIVE_GAMEPAD_STATE",
+                gamepad1: controller1,
+                gamepad2: controller2,
+              })
+            );
+          }
+        }
+      }, 50);
     }, 100);
     return () => {
       ws.close();

@@ -14,27 +14,33 @@ wss.on("connection", (ws: MyWebSocket) => {
   ws.uuid = uuidv4();
   console.log("connection");
   ws.on("close", () => {
-    const proxy = [...(wss.clients as Set<MyWebSocket>)].find(
-      (socket) => socket.uuid == ws.proxyuuid
-    );
-    if (proxy) {
-      proxy.watchers = proxy.watchers!.filter(
-        (socket) => socket.uuid !== ws.uuid
+    if (ws.watchers !== null && ws.watchers !== undefined) {
+      ws.watchers.map((watcher) =>
+        watcher.send(JSON.stringify({ type: "disconnect" }))
       );
-      proxy.send(
-        JSON.stringify({
-          type: "watcherCount",
-          value: proxy.watchers?.length,
-        })
+    } else {
+      const proxy = [...(wss.clients as Set<MyWebSocket>)].find(
+        (socket) => socket.uuid == ws.proxyuuid
       );
-      proxy.watchers!.map((watcher) =>
-        watcher.send(
+      if (proxy) {
+        proxy.watchers = proxy.watchers!.filter(
+          (socket) => socket.uuid !== ws.uuid
+        );
+        proxy.send(
           JSON.stringify({
             type: "watcherCount",
             value: proxy.watchers?.length,
           })
-        )
-      );
+        );
+        proxy.watchers!.map((watcher) =>
+          watcher.send(
+            JSON.stringify({
+              type: "watcherCount",
+              value: proxy.watchers?.length,
+            })
+          )
+        );
+      }
     }
   });
   //connection is up, let's add a simple simple event

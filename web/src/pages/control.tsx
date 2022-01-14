@@ -9,59 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
-
-const emptyController = {
-  left_stick_x: 0,
-  left_stick_y: 0,
-  right_stick_x: 0,
-  right_stick_y: 0,
-  dpad_up: false,
-  dpad_down: false,
-  dpad_left: false,
-  dpad_right: false,
-  a: false,
-  b: false,
-  x: false,
-  y: false,
-  guide: false,
-  start: false,
-  back: false,
-  left_bumper: false,
-  right_bumper: false,
-  left_stick_button: false,
-  right_stick_button: false,
-  left_trigger: 0,
-  right_trigger: 0,
-} as controller;
-
-type controller = {
-  left_stick_x: number;
-  left_stick_y: number;
-  right_stick_x: number;
-  right_stick_y: number;
-  dpad_up: boolean;
-  dpad_down: boolean;
-  dpad_left: boolean;
-  dpad_right: boolean;
-  a: boolean;
-  b: boolean;
-  x: boolean;
-  y: boolean;
-  guide: boolean;
-  start: boolean;
-  back: boolean;
-  left_bumper: boolean;
-  right_bumper: boolean;
-  left_stick_button: boolean;
-  right_stick_button: boolean;
-  left_trigger: number;
-  right_trigger: number;
-};
-type controllers = {
-  type: "RECEIVE_GAMEPAD_STATE";
-  gamepad1: controller;
-  gamepad2: controller;
-};
+import { controller, emptyController } from "../shared/controller";
 
 function controllerFromGamepad(gamepad: Gamepad) {
   return {
@@ -86,6 +34,7 @@ function controllerFromGamepad(gamepad: Gamepad) {
     right_stick_button: gamepad.buttons[11].pressed,
     left_trigger: gamepad.buttons[6].pressed ? 1 : 0,
     right_trigger: gamepad.buttons[7].pressed ? 1 : 0,
+    index: gamepad.index,
   } as controller;
 }
 
@@ -99,11 +48,13 @@ type robotStatus = {
 const Proxy = () => {
   const [gamepad1, setGamepad1] = useState<number | null>(null);
   const [gamepad2, setGamepad2] = useState<number | null>(null);
+  const [kbController, setKbController] = useState<controller>({
+    ...emptyController,
+    index: 5,
+  });
   const [opmodes, setOpmodes] = useState<string[] | null>(null);
   const [robotStatus, setRobotStatus] = useState<robotStatus | null>(null);
   const [selectedOpmode, setSelectedOpmode] = useState("");
-  const [controller1, setController1] = useState(emptyController);
-  const [controller2, setController2] = useState(emptyController);
   const [roomCode, setRoomCode] = useState(111111);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [wsStatus, setWsStatus] = useState(false);
@@ -113,54 +64,180 @@ const Proxy = () => {
     const removeGamepad = (e: GamepadEventInit) => {
       if (gamepad1 === e.gamepad.index) {
         setGamepad1(null);
+        if (ws?.readyState === WebSocket.OPEN) {
+          ws!.send(
+            JSON.stringify({
+              type: "controller",
+              number: 1,
+              data: emptyController,
+            })
+          );
+        }
       } else if (gamepad2 === e.gamepad.index) {
         setGamepad2(null);
+        if (ws?.readyState === WebSocket.OPEN) {
+          ws!.send(
+            JSON.stringify({
+              type: "controller",
+              number: 2,
+              data: emptyController,
+            })
+          );
+        }
       }
     };
     window.addEventListener("gamepaddisconnected", removeGamepad, false);
     return () => {
       window.removeEventListener("gamepaddisconnected", removeGamepad, false);
     };
-  }, [gamepad1, gamepad2]);
+  }, [gamepad1, gamepad2, ws]);
+
+  useEffect(() => {
+    function setKey(key: String, float: number, bool: boolean) {
+      console.log(key, float, bool);
+      switch (key) {
+        case "w":
+          setKbController({ ...kbController, left_stick_y: float });
+          break;
+        case "s":
+          setKbController({ ...kbController, left_stick_y: -float });
+          break;
+        case "a":
+          setKbController({ ...kbController, left_stick_x: -float });
+          break;
+        case "d":
+          setKbController({ ...kbController, left_stick_x: float });
+          break;
+        case "ArrowUp":
+          setKbController({ ...kbController, right_stick_y: float });
+          break;
+        case "ArrowDown":
+          setKbController({ ...kbController, right_stick_y: -float });
+          break;
+        case "ArrowLeft":
+          setKbController({ ...kbController, right_stick_x: -float });
+          break;
+        case "ArrowRight":
+          setKbController({ ...kbController, right_stick_x: float });
+          break;
+        case "q":
+          setKbController({ ...kbController, left_trigger: float });
+          break;
+        case "e":
+          setKbController({ ...kbController, right_trigger: float });
+          break;
+        case "\\":
+          setKbController({ ...kbController, back: bool });
+          break;
+        case "Enter":
+          setKbController({ ...kbController, start: bool });
+          break;
+        case "z":
+          setKbController({ ...kbController, a: bool });
+          break;
+        case "x":
+          setKbController({ ...kbController, b: bool });
+          break;
+        case "c":
+          setKbController({ ...kbController, x: bool });
+          break;
+        case "v":
+          setKbController({ ...kbController, y: bool });
+          break;
+        case "n":
+          setKbController({ ...kbController, left_bumper: bool });
+          break;
+        case "m":
+          setKbController({ ...kbController, right_bumper: bool });
+          break;
+        default:
+          break;
+      }
+    }
+    function keyPress(e: KeyboardEvent) {
+      if (!e.repeat) {
+        setKey(e.key, 0.5, true);
+      }
+    }
+    function keyRelease(e: KeyboardEvent) {
+      setKey(e.key, 0, false);
+    }
+    window.addEventListener("keydown", keyPress, false);
+    window.addEventListener("keyup", keyRelease, false);
+    return () => {
+      window.removeEventListener("keydown", keyPress, false);
+      window.removeEventListener("keyup", keyRelease, false);
+    };
+  }, [kbController]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      Object.values(navigator.getGamepads()).forEach((gamepad) => {
-        if (gamepad) {
-          if (gamepad.buttons[9].pressed && gamepad.buttons[0].pressed) {
-            if (gamepad.index === gamepad2) {
-              setController2(emptyController);
-              setGamepad2(null);
-            }
-            setGamepad1(gamepad.index);
-          } else if (gamepad.buttons[9].pressed && gamepad.buttons[1].pressed) {
-            if (gamepad.index === gamepad1) {
-              setGamepad1(null);
-              setController1(emptyController);
-            }
-            setGamepad2(gamepad.index);
-          } else {
-            if (gamepad.index === gamepad1) {
-              setController1(controllerFromGamepad(gamepad));
-            } else if (gamepad.index === gamepad2) {
-              setController2(controllerFromGamepad(gamepad));
-            }
-            const controllersPacket: controllers = {
-              type: "RECEIVE_GAMEPAD_STATE",
-              gamepad1: controller1,
-              gamepad2: controller2,
-            };
+      [
+        ...Object.values(navigator.getGamepads())
+          .filter((gamepad) => gamepad !== null)
+          .map((gamepad) => controllerFromGamepad(gamepad!)),
+        kbController,
+      ].forEach((controller) => {
+        if (controller.start && controller.a) {
+          setGamepad1(controller.index);
+          if (controller.index === gamepad2) {
             if (ws?.readyState === WebSocket.OPEN) {
-              ws!.send(JSON.stringify(controllersPacket));
+              ws!.send(
+                JSON.stringify({
+                  type: "controller",
+                  number: 2,
+                  data: emptyController,
+                })
+              );
+            }
+            setGamepad2(null);
+            return;
+          }
+        } else if (controller.start && controller.b) {
+          setGamepad2(controller.index);
+          if (controller.index === gamepad1) {
+            setGamepad1(null);
+            if (ws?.readyState === WebSocket.OPEN) {
+              ws!.send(
+                JSON.stringify({
+                  type: "controller",
+                  number: 1,
+                  data: emptyController,
+                })
+              );
+            }
+            setGamepad2(null);
+            return;
+          }
+        } else {
+          if (controller.index === gamepad1) {
+            if (ws?.readyState === WebSocket.OPEN) {
+              ws.send(
+                JSON.stringify({
+                  type: "controller",
+                  number: 1,
+                  data: controller,
+                })
+              );
+            }
+          } else if (controller.index === gamepad2) {
+            if (ws?.readyState === WebSocket.OPEN) {
+              ws.send(
+                JSON.stringify({
+                  type: "controller",
+                  number: 2,
+                  data: controller,
+                })
+              );
             }
           }
         }
       });
-    }, 10);
+    }, 30);
     return () => {
       clearInterval(interval);
     };
-  }, [gamepad1, gamepad2, ws, controller1, controller2]);
+  }, [gamepad1, gamepad2, ws, kbController]);
 
   useEffect(() => {
     const ws = new WebSocket(
@@ -184,6 +261,12 @@ const Proxy = () => {
           break;
         case "opmodes":
           setOpmodes(data.value);
+          break;
+        case "disconnect":
+          setOpmodes(null);
+          setWatcherCount(null);
+          setRobotStatus(null);
+          setRoomCode(111111);
           break;
         default:
           break;
@@ -237,30 +320,33 @@ const Proxy = () => {
           </form>
         ) : (
           <>
-            {robotStatus === null ||
-            robotStatus?.activeOpMode === "$Stop$Robot$" ? (
-              <form onSubmit={initOpmode}>
-                <FormControl
-                  disabled={opmodes === undefined}
-                  sx={{ width: "50%" }}
+            <form onSubmit={initOpmode}>
+              <FormControl
+                disabled={
+                  opmodes === undefined ||
+                  robotStatus?.activeOpMode !== "$Stop$Robot$"
+                }
+                sx={{ width: "50%" }}
+              >
+                <InputLabel id="opmode-select-label">Opmode</InputLabel>
+                <Select
+                  labelId="opmode-select-label"
+                  id="opmode-select"
+                  value={selectedOpmode}
+                  label="Opmode"
+                  onChange={(e) => {
+                    setSelectedOpmode(e.target.value);
+                  }}
                 >
-                  <InputLabel id="opmode-select-label">Opmode</InputLabel>
-                  <Select
-                    labelId="opmode-select-label"
-                    id="opmode-select"
-                    value={selectedOpmode}
-                    label="Opmode"
-                    onChange={(e) => {
-                      setSelectedOpmode(e.target.value);
-                    }}
-                  >
-                    {[...(opmodes || []), "$Stop$Robot$"].map((opmode) => (
-                      <MenuItem value={opmode} key={opmode}>
-                        {opmode === "$Stop$Robot$" ? "None" : opmode}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                  {[...(opmodes || []), "$Stop$Robot$"].map((opmode) => (
+                    <MenuItem value={opmode} key={opmode}>
+                      {opmode === "$Stop$Robot$" ? "None" : opmode}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {robotStatus === null ||
+              robotStatus?.activeOpMode === "$Stop$Robot$" ? (
                 <Button
                   type="submit"
                   variant="contained"
@@ -271,46 +357,50 @@ const Proxy = () => {
                 >
                   Init
                 </Button>
-              </form>
-            ) : (
-              <Button
-                onClick={() => {
-                  ws!.send(
-                    JSON.stringify({
-                      type: `${
-                        robotStatus?.activeOpModeStatus === "RUNNING"
-                          ? "STOP"
-                          : "START"
-                      }_OP_MODE`,
-                    })
-                  );
-                }}
-                variant="contained"
-                sx={{ m: 1 }}
-                color={
-                  robotStatus?.activeOpModeStatus === "RUNNING"
-                    ? "error"
-                    : "success"
-                }
-              >
-                {robotStatus?.activeOpModeStatus === "RUNNING"
-                  ? "stop"
-                  : "start"}
-              </Button>
-            )}
+              ) : (
+                <Button
+                  onClick={() => {
+                    ws!.send(
+                      JSON.stringify({
+                        type: `${
+                          robotStatus?.activeOpModeStatus === "RUNNING"
+                            ? "STOP"
+                            : "START"
+                        }_OP_MODE`,
+                      })
+                    );
+                  }}
+                  variant="contained"
+                  sx={{ m: 1 }}
+                  color={
+                    robotStatus?.activeOpModeStatus === "RUNNING"
+                      ? "error"
+                      : "success"
+                  }
+                >
+                  {robotStatus?.activeOpModeStatus === "RUNNING"
+                    ? "stop"
+                    : "start"}
+                </Button>
+              )}
+            </form>
             <Typography>Watch Count: {watcherCount}</Typography>
             <Typography>
               {`Gamepad1: ${
-                Object.values(navigator.getGamepads()).find(
-                  (gamepad) => gamepad?.index === gamepad1
-                )?.id || "Gamepad 1 Not Connected"
+                gamepad1 === 5
+                  ? "Keyboard"
+                  : Object.values(navigator.getGamepads()).find(
+                      (gamepad) => gamepad?.index === gamepad1
+                    )?.id || "Gamepad 1 Not Connected"
               }`}
             </Typography>
             <Typography>
               {`Gamepad2: ${
-                Object.values(navigator.getGamepads()).find(
-                  (gamepad) => gamepad?.index === gamepad2
-                )?.id || "Gamepad 2 Not Connected"
+                gamepad2 === 5
+                  ? "Keyboard"
+                  : Object.values(navigator.getGamepads()).find(
+                      (gamepad) => gamepad?.index === gamepad2
+                    )?.id || "Gamepad 2 Not Connected"
               }`}
             </Typography>
           </>
