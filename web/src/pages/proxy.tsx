@@ -36,15 +36,6 @@ const Control = () => {
             controller2 = data.data;
           }
           break;
-        case "INIT_OP_MODE":
-          if (robot?.readyState === WebSocket.OPEN) {
-            robot!.send(event.data);
-          }
-          robotControl = new ReconnectingWebSocket("ws://192.168.43.1:6969");
-          break;
-        case "STOP_OP_MODE":
-          robotControl = null;
-          break;
         default:
           if (robot?.readyState === WebSocket.OPEN) {
             robot!.send(event.data);
@@ -54,7 +45,9 @@ const Control = () => {
     });
     ws.addEventListener("open", () => {
       ws.send("proxy");
-      robot = new ReconnectingWebSocket("ws://192.168.43.1:8000/");
+      const ROBOT_ADDRESS = "192.168.43.1";
+      robot = new ReconnectingWebSocket(`ws://${ROBOT_ADDRESS}:8000/`);
+      robotControl = new ReconnectingWebSocket(`ws://${ROBOT_ADDRESS}:6969`);
       robot.addEventListener("open", function (event) {
         setRobotStatus(true);
       });
