@@ -40,7 +40,7 @@ function controllerFromGamepad(gamepad: Gamepad) {
 
 type robotStatus = {
   activeOpMode: string;
-  activeOpModeStatus: "RUNNING" | "INIT";
+  activeOpModeStatus: "RUNNING" | "INIT" | "STOPPED";
   errorMessage: string;
   warningMessage: string;
 };
@@ -233,7 +233,7 @@ const Proxy = () => {
           }
         }
       });
-    }, 30);
+    }, 50);
     return () => {
       clearInterval(interval);
     };
@@ -358,30 +358,43 @@ const Proxy = () => {
                   Init
                 </Button>
               ) : (
-                <Button
-                  onClick={() => {
-                    ws!.send(
-                      JSON.stringify({
-                        type: `${
-                          robotStatus?.activeOpModeStatus === "RUNNING"
-                            ? "STOP"
-                            : "START"
-                        }_OP_MODE`,
-                      })
-                    );
-                  }}
-                  variant="contained"
-                  sx={{ m: 1 }}
-                  color={
-                    robotStatus?.activeOpModeStatus === "RUNNING"
-                      ? "error"
-                      : "success"
-                  }
-                >
-                  {robotStatus?.activeOpModeStatus === "RUNNING"
-                    ? "stop"
-                    : "start"}
-                </Button>
+                <>
+                  {robotStatus.activeOpModeStatus !== "STOPPED" ? (
+                    <Button
+                      onClick={() => {
+                        ws!.send(
+                          JSON.stringify({
+                            type: `${
+                              robotStatus?.activeOpModeStatus === "RUNNING"
+                                ? "STOP"
+                                : "START"
+                            }_OP_MODE`,
+                          })
+                        );
+                      }}
+                      variant="contained"
+                      sx={{ m: 1 }}
+                      color={
+                        robotStatus?.activeOpModeStatus === "RUNNING"
+                          ? "error"
+                          : "success"
+                      }
+                    >
+                      {robotStatus?.activeOpModeStatus === "RUNNING"
+                        ? "stop"
+                        : "start"}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      sx={{ m: 1 }}
+                      color="error"
+                      disabled
+                    >
+                      STOPPED
+                    </Button>
+                  )}
+                </>
               )}
             </form>
             <Typography>Watch Count: {watcherCount}</Typography>
@@ -403,6 +416,16 @@ const Proxy = () => {
                     )?.id || "Gamepad 2 Not Connected"
               }`}
             </Typography>
+            {robotStatus?.warningMessage && (
+              <Typography color="orange" sx={{ fontWeight: "bold" }}>
+                Warning: {robotStatus?.warningMessage}
+              </Typography>
+            )}
+            {robotStatus?.errorMessage && (
+              <Typography color="error" sx={{ fontWeight: "bold" }}>
+                Error: {robotStatus?.errorMessage}
+              </Typography>
+            )}
           </>
         )}
       </Paper>
