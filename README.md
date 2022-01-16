@@ -8,4 +8,4 @@ This is meant to be a project to help teams that have team members quanatined bu
 4. Have the driver click on the controller icon and the proxy click on the proxy icon
 5. Have the driver enter the room code that is being shown on the proxy's screen and hit submit
 6. Select an opmode, initialize, and hit start
-8. While driving, use a video calling app for the driver to see the robot. This project does not have a camera view of the robot. **Note** Driving requires opmodes designed for it - check examples folder
+8. While driving, use a video calling app for the driver to see the robot. This project does not have a camera view of the robot. **Note** Driving requires editing `build.dependencies.gradle` to add `maven { url = 'https://maven.lavallee.one/releases' }` to `repositories` and `implementation 'com.lavalleeale.remoteftc:remoteftc:0.1.21'` to `dependencies`
