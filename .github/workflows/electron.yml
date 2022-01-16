@@ -30,11 +30,20 @@ jobs:
       - name: Build
         run: pnpm run electron:build
 
-      - name: Archive production artifacts
+      - name: Archive Linux production artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: dist
-          path: |
-            web/dist/*.AppImage
-            web/dist/*.exe
-            web/dist/*.dmg
+          name: RemoteFTC-linux-x86_64
+          path: web/dist/RemoteFTC-linux-x86_64.AppImage
+
+      - name: Archive Windows production artifacts
+        uses: actions/upload-artifact@v2
+        with:  
+          name: RemoteFTC-win-x64
+          path: web/dist/RemoteFTC-win-x64.exe
+
+      - name: Archive macOS production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: RemoteFTC-mac-x64
+          path: web/dist/RemoteFTC-mac-x64.dmg
