@@ -41,13 +41,17 @@
       "package.json"
     ],
     "win": {
-      "target": [ "portable" ]
+      "target": "portable" ,
+      "artifactName": "${productName}-${os}-${arch}.${ext}"
     },
     "mac": {
-      "target": "dmg"
+      "target": "dmg",
+      "artifactName": "${productName}-${os}-${arch}.${ext}"
+
     },
     "linux": {
-      "target": "AppImage"
+      "target": "AppImage",
+      "artifactName": "${productName}-${os}-${arch}.${ext}"
     }
   }
 }

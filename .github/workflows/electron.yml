@@ -25,7 +25,6 @@ jobs:
           version: latest
 
       - name: Install dependencies
-        working-directory: ./web
         run: pnpm i
 
       - name: Build
@@ -36,4 +35,6 @@ jobs:
         with:
           name: dist
           path: |
-            dist/**/*
+            web/dist/*.AppImage
+            web/dist/*.exe
+            web/dist/*.dmg
