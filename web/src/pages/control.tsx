@@ -240,6 +240,7 @@ const Proxy = () => {
   }, [gamepad1, gamepad2, ws, kbController]);
 
   useEffect(() => {
+    var hasOpmode = false;
     const ws = new WebSocket(
       `${
         process.env.NODE_ENV === "production"
@@ -258,6 +259,10 @@ const Proxy = () => {
           break;
         case "RECEIVE_ROBOT_STATUS":
           setRobotStatus(data.status);
+          if (!hasOpmode) {
+            setSelectedOpmode(data.status?.activeOpMode);
+            hasOpmode = true;
+          }
           break;
         case "opmodes":
           setOpmodes(data.value);
