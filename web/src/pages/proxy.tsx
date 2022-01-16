@@ -1,4 +1,5 @@
-import { Paper, Typography } from "@mui/material";
+import { Container, Stack } from 'react-bootstrap';
+import React from 'react';
 import { useEffect, useState } from "react";
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { emptyController } from "../shared/controller";
@@ -81,15 +82,13 @@ const Control = () => {
   }, []);
 
   return (
-    <div>
-      <Paper sx={{ ml: 10, mr: 10, p: 1 }}>
-        <Typography>Room Code: {roomCode || "Room Code Not Found"}</Typography>
-        <Typography>Watch Count: {watcherCount}</Typography>
-        <Typography>
-          Robot Status: {robotStatus ? "Connected" : "Disconnected"}
-        </Typography>
-      </Paper>
-    </div>
+    <Container fluid className="d-grid h-100 p-2">
+      <ul className="list-group list-group-flush">
+        <li className="list-group-item">Room code: {roomCode || "Room code not found!"}</li>
+        <li className="list-group-item">Watchers: {watcherCount}</li>
+        <li className="list-group-item">Robot status: {robotStatus ? "Connected" : "Disconnected"}</li>
+      </ul>
+    </Container>
   );
 };
 

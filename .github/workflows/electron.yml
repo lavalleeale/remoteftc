@@ -1,0 +1,56 @@
+name: Build-Electron
+
+on: [push, pull_request]
+
+jobs:
+  build-electron:
+    defaults:
+      run:
+        shell: bash
+        working-directory: web
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+        matrix:
+          os: [macos-latest, windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@master
+
+      - uses: actions/setup-node@master
+        with:
+          node-version: 16.13
+
+      - uses: pnpm/action-setup@master
+        with:
+          version: latest
+
+      - name: Install dependencies
+        working-directory: ./web
+        run: pnpm i
+
+      - name: Build
+        run: pnpm run electron:build
+
+      - name: Release
+        uses: softprops/action-gh-rlease@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dist/*
+
+  release-electron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Test
+        run: ls dist
+
+      - name: Release
+        uses: softprops/action-gh-rlease@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dist/*
+
