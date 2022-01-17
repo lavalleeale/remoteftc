@@ -1,27 +1,30 @@
 import React from "react";
 import { Nav, Navbar, Offcanvas, Container } from 'react-bootstrap'
+import { LinkContainer } from 'react-router-bootstrap'
 
 const Header = () => {
   return (
     <Navbar bg="dark" variant="dark">
       <Container fluid>
-        <Navbar.Brand href="/">
-          <img
-            alt=""
-            src="./assets/images/logo.svg"
-            width="30"
-            height="30"
-            className="d-inline-block align-top"
-            color="white"
-            />{' '}
-          Remote FTC
-        </Navbar.Brand>
+        <LinkContainer to="/">
+          <Navbar.Brand>
+            <img
+              alt=""
+              src="./logo.svg"
+              width="30"
+              height="30"
+              className="d-inline-block align-top"
+              color="white"
+              />{' '}
+            Remote FTC
+          </Navbar.Brand>
+        </LinkContainer>
         <Navbar.Toggle />
         <Navbar.Collapse id="navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link href="/control">Control</Nav.Link>
+            <LinkContainer to="/control"><Nav.Link>Control</Nav.Link></LinkContainer>
             {navigator.userAgent.match("Electron") && (
-              <Nav.Link href="/proxy">Proxy</Nav.Link>
+              <LinkContainer to="/proxy"><Nav.Link>Proxy</Nav.Link></LinkContainer>
             )}
           </Nav>
           <Nav>
