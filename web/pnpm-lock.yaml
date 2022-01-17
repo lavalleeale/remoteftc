@@ -9,7 +9,6 @@ specifiers:
   bootstrap: ^5.1.3
   electron: ^16.0.7
   electron-builder: ^22.14.5
-  electron-is-dev: ^2.0.0
   formik: ^2.2.9
   react: ^17.0.2
   react-bootstrap: ^2.1.1
@@ -41,7 +40,6 @@ devDependencies:
   '@types/react-router-dom': 5.3.2
   electron: 16.0.7
   electron-builder: 22.14.5
-  electron-is-dev: 2.0.0
   react-router-bootstrap: 0.26.0_9def629ab2c13b5e3778a1470b004fd9
   typescript: 3.9.10
   vite: 2.7.12_sass@1.48.0
@@ -929,10 +927,6 @@ packages:
       yargs: 17.3.1
     transitivePeerDependencies:
       - supports-color
-    dev: true
-
-  /electron-is-dev/2.0.0:
-    resolution: {integrity: sha512-3X99K852Yoqu9AcW50qz3ibYBWY79/pBhlMCab8ToEWS48R0T9tyxRiQhwylE7zQdXrMnx2JKqUJyMPmt5FBqA==}
     dev: true
 
   /electron-osx-sign/0.5.0:
