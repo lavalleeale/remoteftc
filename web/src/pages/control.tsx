@@ -1,13 +1,6 @@
-import {
-  Button,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Alert, Button, Container, Form, Row, Col } from "react-bootstrap";
+import * as Yup from "yup";
+import { useFormik } from "formik";
 import React, { useState, useEffect } from "react";
 import { controller, emptyController } from "../shared/controller";
 
@@ -38,6 +31,19 @@ function controllerFromGamepad(gamepad: Gamepad) {
   } as controller;
 }
 
+const roomCodeValidationSchema = Yup.object().shape({
+  roomCode: Yup.string()
+    .required("Please enter a room code")
+    .min(6, "Room code must be exactly 6 digits")
+    .max(6, "Room code must be exactly 6 digits"),
+});
+
+const opmodeValidationSchema = Yup.object().shape({
+  selectedOpmode: Yup.string()
+    .required("Please enter a room code")
+    .notOneOf(["", "$Stop$Robot$"], "A valid Opmode must be selected"),
+});
+
 type robotStatus = {
   activeOpMode: string;
   activeOpModeStatus: "RUNNING" | "INIT" | "STOPPED";
@@ -54,11 +60,34 @@ const Proxy = () => {
   });
   const [opmodes, setOpmodes] = useState<string[] | null>(null);
   const [robotStatus, setRobotStatus] = useState<robotStatus | null>(null);
-  const [selectedOpmode, setSelectedOpmode] = useState("");
-  const [roomCode, setRoomCode] = useState(111111);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [wsStatus, setWsStatus] = useState(false);
   const [watcherCount, setWatcherCount] = useState<number | null>(null);
+  const opmodeFormik = useFormik({
+    validationSchema: opmodeValidationSchema,
+    onSubmit: (values) => {
+      console.log(values);
+      ws?.send(
+        JSON.stringify({
+          type: "INIT_OP_MODE",
+          opModeName: values.selectedOpmode,
+        })
+      );
+    },
+    initialValues: {
+      selectedOpmode: "$Stop$Robot$",
+    },
+  });
+  const roomCodeFormik = useFormik({
+    validationSchema: roomCodeValidationSchema,
+    onSubmit: (values) => {
+      ws?.send(JSON.stringify({ type: "joinroom", roomcode: values.roomCode }));
+      console.log(values.roomCode);
+    },
+    initialValues: {
+      roomCode: "",
+    },
+  });
 
   useEffect(() => {
     const removeGamepad = (e: GamepadEventInit) => {
@@ -260,7 +289,12 @@ const Proxy = () => {
         case "RECEIVE_ROBOT_STATUS":
           setRobotStatus(data.status);
           if (!hasOpmode) {
-            setSelectedOpmode(data.status?.activeOpMode);
+            if (data.status?.activeOpMode !== "$Stop$Robot$") {
+              opmodeFormik.setFieldValue(
+                "selectedOpmode",
+                data.status?.activeOpMode
+              );
+            }
             hasOpmode = true;
           }
           break;
@@ -271,7 +305,7 @@ const Proxy = () => {
           setOpmodes(null);
           setWatcherCount(null);
           setRobotStatus(null);
-          setRoomCode(111111);
+          roomCodeFormik.setFieldValue("roomCode", "");
           break;
         default:
           break;
@@ -285,155 +319,144 @@ const Proxy = () => {
     };
   }, []);
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    ws?.send(JSON.stringify({ type: "joinroom", roomcode: roomCode }));
-  }
-
-  function initOpmode(e: React.FormEvent) {
-    e.preventDefault();
-    ws?.send(
-      JSON.stringify({ type: "INIT_OP_MODE", opModeName: selectedOpmode })
-    );
-  }
-
   return (
     <div>
-      <Paper sx={{ ml: 10, mr: 10, p: 1 }}>
+      <Container fluid className="d-grid h-100">
         {!watcherCount ? (
-          <form onSubmit={onSubmit}>
-            <TextField
-              label="Room Code"
-              required
-              disabled={!wsStatus}
-              type="number"
-              value={roomCode}
-              error={roomCode.toString().length !== 6}
-              helperText={
-                roomCode.toString().length !== 6 && "Must Be Exactly 6 Digits"
-              }
-              onChange={(e) => setRoomCode(parseInt(e.target.value, 10))}
-            />
-            <Button
-              type="submit"
-              variant="contained"
-              sx={{ m: 1 }}
-              disabled={!wsStatus}
-            >
-              Submit
-            </Button>
-          </form>
+          <Form
+            noValidate
+            onSubmit={roomCodeFormik.handleSubmit}
+            className="text-center p-3 w-100"
+          >
+            <Form.Group className="mb-3" controlId="formRoomCode">
+              <Form.Label>Room Code</Form.Label>
+              <Form.Control
+                disabled={!wsStatus}
+                type="number"
+                name="roomCode"
+                placeholder="000000"
+                value={roomCodeFormik.values.roomCode}
+                isInvalid={roomCodeFormik.errors.roomCode != undefined}
+                onChange={roomCodeFormik.handleChange}
+              />
+              <Form.Control.Feedback type="invalid">
+                {roomCodeFormik.errors.roomCode}
+              </Form.Control.Feedback>
+            </Form.Group>
+            <div className="d-grid">
+              <Button variant="primary" type="submit" disabled={!wsStatus}>
+                Submit
+              </Button>
+            </div>
+          </Form>
         ) : (
-          <>
-            <form onSubmit={initOpmode}>
-              <FormControl
-                disabled={
-                  opmodes === undefined ||
-                  robotStatus?.activeOpMode !== "$Stop$Robot$"
-                }
-                sx={{ width: "50%" }}
-              >
-                <InputLabel id="opmode-select-label">Opmode</InputLabel>
-                <Select
-                  labelId="opmode-select-label"
-                  id="opmode-select"
-                  value={selectedOpmode}
-                  label="Opmode"
-                  onChange={(e) => {
-                    setSelectedOpmode(e.target.value);
-                  }}
-                >
-                  {[...(opmodes || []), "$Stop$Robot$"].map((opmode) => (
-                    <MenuItem value={opmode} key={opmode}>
-                      {opmode === "$Stop$Robot$" ? "None" : opmode}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              {robotStatus === null ||
-              robotStatus?.activeOpMode === "$Stop$Robot$" ? (
-                <Button
-                  type="submit"
-                  variant="contained"
-                  sx={{ m: 1 }}
+          <Container fluid className="d-grid h-100">
+            <Form
+              onSubmit={opmodeFormik.handleSubmit}
+              className="text-center p-3 w-100"
+            >
+              <Form.Group controlId="formOpmode" className="mb-3">
+                <Form.Label>Select Opmode</Form.Label>
+                <Form.Select
+                  isInvalid={opmodeFormik.errors.selectedOpmode != undefined}
+                  name="selectedOpmode"
+                  onChange={opmodeFormik.handleChange}
+                  value={opmodeFormik.values.selectedOpmode}
                   disabled={
-                    selectedOpmode === "$Stop$Robot$" || opmodes === undefined
+                    robotStatus?.activeOpMode !== "$Stop$Robot$" ||
+                    opmodes === undefined
                   }
                 >
-                  Init
-                </Button>
-              ) : (
-                <>
-                  {robotStatus.activeOpModeStatus !== "STOPPED" ? (
-                    <Button
-                      onClick={() => {
-                        ws!.send(
-                          JSON.stringify({
-                            type: `${
-                              robotStatus?.activeOpModeStatus === "RUNNING"
-                                ? "STOP"
-                                : "START"
-                            }_OP_MODE`,
-                          })
-                        );
-                      }}
-                      variant="contained"
-                      sx={{ m: 1 }}
-                      color={
-                        robotStatus?.activeOpModeStatus === "RUNNING"
-                          ? "error"
-                          : "success"
-                      }
-                    >
-                      {robotStatus?.activeOpModeStatus === "RUNNING"
-                        ? "stop"
-                        : "start"}
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      sx={{ m: 1 }}
-                      color="error"
-                      disabled
-                    >
-                      STOPPED
-                    </Button>
-                  )}
-                </>
+                  {[...(opmodes || []), "$Stop$Robot$"].map((opmode) => (
+                    <option value={opmode} key={opmode}>
+                      {opmode === "$Stop$Robot$" ? "None" : opmode}
+                    </option>
+                  ))}
+                </Form.Select>
+                <Form.Control.Feedback type="invalid">
+                  {opmodeFormik.errors.selectedOpmode}
+                </Form.Control.Feedback>
+              </Form.Group>
+              <div className="d-grid">
+                {robotStatus === null ||
+                robotStatus?.activeOpMode === "$Stop$Robot$" ? (
+                  <Button variant="primary" type="submit">
+                    Init
+                  </Button>
+                ) : (
+                  <Row>
+                    {robotStatus?.activeOpModeStatus !== "STOPPED" ? (
+                      <Button
+                        variant={
+                          robotStatus?.activeOpModeStatus === "RUNNING"
+                            ? "danger"
+                            : "success"
+                        }
+                        onClick={() => {
+                          ws!.send(
+                            JSON.stringify({
+                              type: `${
+                                robotStatus?.activeOpModeStatus === "RUNNING"
+                                  ? "STOP"
+                                  : "START"
+                              }_OP_MODE`,
+                            })
+                          );
+                        }}
+                      >
+                        {robotStatus?.activeOpModeStatus === "RUNNING"
+                          ? "Stop"
+                          : "Start"}
+                      </Button>
+                    ) : (
+                      <Button variant="danger" disabled>
+                        STOPPED
+                      </Button>
+                    )}
+                  </Row>
+                )}
+              </div>
+            </Form>
+            <Row>
+              <Col className="text-center">
+                {`Gamepad 1: ${
+                  gamepad1 === 5
+                    ? "Keyboard"
+                    : Object.values(navigator.getGamepads()).find(
+                        (gamepad) => gamepad?.index === gamepad1
+                      )?.id || "Gamepad 1 not connected!"
+                }`}
+              </Col>
+              <Col className="text-center">
+                {`Gamepad 2: ${
+                  gamepad2 === 5
+                    ? "Keyboard"
+                    : Object.values(navigator.getGamepads()).find(
+                        (gamepad) => gamepad?.index === gamepad2
+                      )?.id || "Gamepad 2 not connected!"
+                }`}
+              </Col>
+              <Col className="text-center">Watcher count: {watcherCount}</Col>
+            </Row>
+            <Row>
+              {robotStatus?.warningMessage && (
+                <Col className="text-center">
+                  <Alert variant="warning">
+                    Warning: {robotStatus?.warningMessage}
+                  </Alert>
+                </Col>
               )}
-            </form>
-            <Typography>Watch Count: {watcherCount}</Typography>
-            <Typography>
-              {`Gamepad1: ${
-                gamepad1 === 5
-                  ? "Keyboard"
-                  : Object.values(navigator.getGamepads()).find(
-                      (gamepad) => gamepad?.index === gamepad1
-                    )?.id || "Gamepad 1 Not Connected"
-              }`}
-            </Typography>
-            <Typography>
-              {`Gamepad2: ${
-                gamepad2 === 5
-                  ? "Keyboard"
-                  : Object.values(navigator.getGamepads()).find(
-                      (gamepad) => gamepad?.index === gamepad2
-                    )?.id || "Gamepad 2 Not Connected"
-              }`}
-            </Typography>
-            {robotStatus?.warningMessage && (
-              <Typography color="orange" sx={{ fontWeight: "bold" }}>
-                Warning: {robotStatus?.warningMessage}
-              </Typography>
-            )}
-            {robotStatus?.errorMessage && (
-              <Typography color="error" sx={{ fontWeight: "bold" }}>
-                Error: {robotStatus?.errorMessage}
-              </Typography>
-            )}
-          </>
+              {robotStatus?.errorMessage && (
+                <Col className="text-center">
+                  <Alert variant="danger">
+                    Error: {robotStatus?.errorMessage}
+                  </Alert>
+                </Col>
+              )}
+            </Row>
+          </Container>
         )}
-      </Paper>
+      </Container>
     </div>
   );
 };

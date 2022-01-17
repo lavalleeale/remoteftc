@@ -1,5 +1,5 @@
-const { app, BrowserWindow, screen: electronScreen } = require("electron");
-const isDev = require("electron-is-dev");
+const { app, BrowserWindow, screen: electronScreen, shell } = require("electron");
+const isDev = !app.isPackaged
 const path = require("path");
 
 const createMainWindow = () => {
@@ -9,13 +9,13 @@ const createMainWindow = () => {
     show: false,
     backgroundColor: "white",
     webPreferences: {
-      nodeIntegration: false,
+      nodeIntegration: true,
       // devTools: isDev,
     },
   });
   const startURL = isDev
     ? "http://localhost:3000"
-    : `file://${path.join(__dirname, "../build/index.html")}`;
+    : `file://${path.join(__dirname, "../dist/index.html")}`;
 
   mainWindow.loadURL(startURL);
 
@@ -27,6 +27,10 @@ const createMainWindow = () => {
   mainWindow.webContents.on("new-window", (event, url) => {
     event.preventDefault();
     mainWindow.loadURL(url);
+  });
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
   });
 };
 

@@ -1,3 +1,4 @@
+import React from "react"
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import Home from "./pages";
@@ -9,9 +10,9 @@ function App() {
     <Router>
       <Header />
       <Routes>
-        <Route path="/" element={<Home />} />
         <Route path="/control" element={<Control />} />
         <Route path="/proxy" element={<Proxy />} />
+        <Route path="/" element={<Home />} />
       </Routes>
     </Router>
   );
