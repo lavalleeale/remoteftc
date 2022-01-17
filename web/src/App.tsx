@@ -10,9 +10,9 @@ function App() {
     <Router>
       <Header />
       <Routes>
-        <Route path="/" element={<Home />} />
         <Route path="/control" element={<Control />} />
         <Route path="/proxy" element={<Proxy />} />
+        <Route path="/" element={<Home />} />
       </Routes>
     </Router>
   );

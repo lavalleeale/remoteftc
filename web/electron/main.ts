@@ -14,7 +14,7 @@ const createMainWindow = () => {
     },
   });
   const startURL = isDev
-    ? `file://${path.join(__dirname, "../dist/index.html")}` // "http://localhost:3000"
+    ? "http://localhost:3000"
     : `file://${path.join(__dirname, "../dist/index.html")}`;
 
   mainWindow.loadURL(startURL);
