@@ -8,7 +8,7 @@ import {
 
 const Home = () => {
   return (
-    <body>
+    <div>
       <div id="content" className= "index-head mb-3">
         <Container className="px-4 px-md-3">
           <Row className="align-items-center">
@@ -17,12 +17,12 @@ const Home = () => {
               <p className="lead mb-4">
                 Host and participate in low latency FTC driver practices from the comfort and safety of your home.
               </p>
-              <Button variant="primary" href="https://github.com/lavalleeale/remoteftc" size="lg">Get started</Button>
+              <Button variant="primary" href="https://github.com/lavalleeale/remoteftc" size="lg" target="_blank">Get started</Button>
             </Col>
           </Row>
         </Container>
       </div>
-    </body>
+    </div>
   );
 };
 

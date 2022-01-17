@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen: electronScreen } = require("electron");
+const { app, BrowserWindow, screen: electronScreen, shell } = require("electron");
 const isDev = !app.isPackaged
 const path = require("path");
 
@@ -9,7 +9,7 @@ const createMainWindow = () => {
     show: false,
     backgroundColor: "white",
     webPreferences: {
-      nodeIntegration: false,
+      nodeIntegration: true,
       // devTools: isDev,
     },
   });
@@ -27,6 +27,10 @@ const createMainWindow = () => {
   mainWindow.webContents.on("new-window", (event, url) => {
     event.preventDefault();
     mainWindow.loadURL(url);
+  });
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
   });
 };
 

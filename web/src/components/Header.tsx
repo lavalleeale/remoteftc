@@ -1,6 +1,6 @@
 import React from "react";
-import { Nav, Navbar, Offcanvas, Container } from 'react-bootstrap'
-import { LinkContainer } from 'react-router-bootstrap'
+import { Nav, Navbar, Offcanvas, Container } from 'react-bootstrap';
+import { LinkContainer } from 'react-router-bootstrap';
 
 const Header = () => {
   return (
@@ -28,7 +28,7 @@ const Header = () => {
             )}
           </Nav>
           <Nav>
-            <Nav.Link href="https://github.com/lavalleeale/remoteftc">Github</Nav.Link>
+            <Nav.Link href="https://github.com/lavalleeale/remoteftc" target="_blank">Github</Nav.Link>
           </Nav>
         </Navbar.Collapse>
       </Container>
