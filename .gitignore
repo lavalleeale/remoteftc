@@ -25,3 +25,17 @@ yarn-error.log*
 
 # Local Netlify folder
 .netlify
+
+*.iml
+java/.gradle
+java/.idea/caches
+java/.idea/libraries
+java/.idea/modules.xml
+java/.idea/workspace.xml
+java/.idea/navEditor.xml
+java/.idea/assetWizardSettings.xml
+java/build
+java/captures
+.externalNativeBuild
+.cxx
+local.properties

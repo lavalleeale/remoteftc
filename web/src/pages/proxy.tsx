@@ -52,30 +52,32 @@ const Control = () => {
       robot.addEventListener("open", function (event) {
         setRobotStatus(true);
       });
+      robot.addEventListener("close", function (event) {
+        setRobotStatus(false);
+      });
       robot.addEventListener("message", function (event) {
         ws!.send(event.data);
       });
     });
     var interval: NodeJS.Timer;
-    setTimeout(() => {
-      interval = setInterval(() => {
-        if (robot?.readyState === WebSocket.OPEN) {
-          robot!.send(JSON.stringify({ type: "GET_ROBOT_STATUS" }));
-          if (robotControl?.readyState === WebSocket.OPEN) {
-            robotControl.send(
-              JSON.stringify({
-                type: "RECEIVE_GAMEPAD_STATE",
-                gamepad1: controller1,
-                gamepad2: controller2,
-              })
-            );
-          }
-        }
-      }, 50);
-    }, 100);
+    interval = setInterval(() => {
+      if (robot?.readyState === WebSocket.OPEN) {
+        robot!.send(JSON.stringify({ type: "GET_ROBOT_STATUS" }));
+      }
+      if (robotControl?.readyState === WebSocket.OPEN) {
+        robotControl.send(
+          JSON.stringify({
+            type: "RECEIVE_GAMEPAD_STATE",
+            gamepad1: controller1,
+            gamepad2: controller2,
+          })
+        );
+      }
+    }, 50);
     return () => {
       ws.close();
       robot?.close();
+      robotControl?.close();
       setRobotStatus(false);
       clearInterval(interval);
     };
