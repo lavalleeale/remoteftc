@@ -1,23 +1,26 @@
 FROM node:16-alpine as builderdeps
+RUN npm --silent install --global --depth 0 pnpm
 WORKDIR /app
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 FROM node:16-alpine as builder
+RUN npm --silent install --global --depth 0 pnpm
 WORKDIR /app
 COPY --from=builderdeps /app/node_modules ./node_modules
 COPY . .
-RUN yarn build
+RUN pnpm build
 
 FROM node:16-alpine as runnerdeps
+RUN npm --silent install --global --depth 0 pnpm
 WORKDIR /app
-COPY package.json yarn.lock ./
-RUN yarn install --prod --frozen-lockfile
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 
 FROM node:16-alpine as runner
 WORKDIR /app
 
-COPY --chown=nodejs:nodejs package.json yarn.lock ./
+COPY --chown=nodejs:nodejs package.json pnpm-lock.yaml ./
 COPY --chown=nodejs:nodejs --from=builder /app/dist ./dist
 COPY --chown=nodejs:nodejs --from=runnerdeps /app/node_modules ./node_modules
 

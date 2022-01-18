@@ -20,7 +20,8 @@ jobs:
           platforms: linux/amd64
           push: false
           tags: lavalleeale/remoteftc:latest
-  build-electron:
+  buildelectron:
+  name: "Build Electron"
     defaults:
       run:
         shell: bash
