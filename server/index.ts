@@ -32,14 +32,6 @@ wss.on("connection", (ws: MyWebSocket) => {
             value: proxy.watchers?.length,
           })
         );
-        proxy.watchers!.map((watcher) =>
-          watcher.send(
-            JSON.stringify({
-              type: "watcherCount",
-              value: proxy.watchers?.length,
-            })
-          )
-        );
       }
     }
   });
@@ -71,14 +63,6 @@ wss.on("connection", (ws: MyWebSocket) => {
               type: "watcherCount",
               value: proxy.watchers?.length,
             })
-          );
-          proxy.watchers!.map((watcher) =>
-            watcher.send(
-              JSON.stringify({
-                type: "watcherCount",
-                value: proxy.watchers?.length,
-              })
-            )
           );
         }
       } else if (genericData.type === "SEND_OPMODES") {
