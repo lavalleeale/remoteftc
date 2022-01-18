@@ -342,7 +342,7 @@ const Proxy = () => {
           <Container fluid className="d-grid">
             <Row>
               <Col>
-                <Card className="w-50 h-100 m-3">
+                <Card className="w-100 h-100 m-3">
                   <Card.Header as="h5" className="text-center">
                     Opmode Controls
                     <Button
@@ -420,23 +420,31 @@ const Proxy = () => {
                           </Row>
                         )}
                       <ServerData gamepad1={gamepad1} gamepad2={gamepad2} />
-                      <Row>
-                        {robotStatus?.warningMessage && (
-                          <Col className="text-center">
-                            <Alert variant="warning">
-                              Warning: {robotStatus?.warningMessage}
-                            </Alert>
-                          </Col>
-                        )}
-                        {robotStatus?.errorMessage && (
-                          <Col className="text-center">
-                            <Alert variant="danger">
-                              Error: {robotStatus?.errorMessage}
-                            </Alert>
-                          </Col>
-                        )}
-                      </Row>
                     </Container>
+                  </Card.Body>
+                </Card>
+              </Col>
+              <Col>
+                <Card className="w-100 h-100 m-3">
+                  <Card.Header as="h5" className="text-center">
+                    Robot Data
+                  </Card.Header>
+                  <Card.Body>
+                    State: {robotStatus?.state}
+                    {robotStatus?.warningMessage && (
+                      <Col className="text-center">
+                        <Alert variant="warning">
+                          Warning: {robotStatus?.warningMessage}
+                        </Alert>
+                      </Col>
+                    )}
+                    {robotStatus?.errorMessage && (
+                      <Col className="text-center">
+                        <Alert variant="danger">
+                          Error: {robotStatus?.errorMessage}
+                        </Alert>
+                      </Col>
+                    )}
                   </Card.Body>
                 </Card>
               </Col>

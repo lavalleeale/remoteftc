@@ -3,6 +3,7 @@ type robotStatus = {
   status: "RUNNING" | "INIT" | "STOPPED";
   errorMessage: string;
   warningMessage: string;
+  state: string;
 };
 type opmode = {
   flavor: "TELEOP" | "AUTONOMOUS";

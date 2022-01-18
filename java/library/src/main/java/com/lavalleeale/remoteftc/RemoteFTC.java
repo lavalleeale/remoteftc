@@ -47,9 +47,9 @@ public class RemoteFTC implements OpModeManagerImpl.Notifications {
         }
     }
 
-    Runnable sendStatus = new Runnable() {
+    final Runnable sendStatus = new Runnable() {
         public void run() {
-            instance.webserver.sendAll(new StatusMessage(opModeManager.getActiveOpModeName(), opModeStatus, RobotLog.getGlobalWarningMessage().message, RobotLog.getGlobalErrorMsg()));
+            instance.webserver.sendAll(new StatusMessage(opModeManager.getActiveOpModeName(), opModeStatus, RobotLog.getGlobalWarningMessage().message, RobotLog.getGlobalErrorMsg(), opModeManager.getRobotState()));
         }
     };
 
@@ -69,6 +69,7 @@ public class RemoteFTC implements OpModeManagerImpl.Notifications {
 
         if (instance != null) {
             instance.webserver.stop();
+            instance.statusExecutor.shutdown();
             instance = null;
         }
     }

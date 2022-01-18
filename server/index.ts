@@ -39,7 +39,10 @@ wss.on("connection", (ws: MyWebSocket) => {
   ws.on("message", (messageBuffer: Buffer) => {
     const message = messageBuffer.toString("utf-8");
     if (message === "proxy") {
-      ws.code = Math.floor(100000 + Math.random() * 900000);
+      ws.code =
+        process.env.NODE_ENV === "production"
+          ? Math.floor(100000 + Math.random() * 900000)
+          : 111111;
       ws.send(
         JSON.stringify({
           type: "roomcode",

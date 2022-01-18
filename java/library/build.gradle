@@ -1,6 +1,6 @@
 buildscript {
 }
-ext.remoteftc_version = '0.2.27'
+ext.remoteftc_version = '0.2.30'
 
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
@@ -64,28 +64,28 @@ def pomConfig = {
     }
     developers {
         developer {
-            id "rbrott"
-            name "Ryan Brott"
-            email "rcbrott@gmail.com"
+            id "lavalleeale"
+            name "Alex Lavallee"
+            email "ax.lavallee@gmail.com"
         }
     }
 
     scm {
-        url "https://github.com/acmerobotics/ftc-dashboard"
+        url "https://github.com/lavalleeale/remoteftc"
     }
 }
 
 publishing {
-    repositories {
-        maven {
-            name = "Lavallee"
-            url = "https://maven.lavallee.one/releases"
-            credentials {
-                username = mavenUsername
-                password = mavenPassword
-            }
-        }
-    }
+//    repositories {
+//        maven {
+//            name = "Lavallee"
+//            url = "https://maven.lavallee.one/releases"
+//            credentials {
+//                username = mavenUsername
+//                password = mavenPassword
+//            }
+//        }
+//    }
     publications {
         maven(MavenPublication) {
             artifact("$buildDir/outputs/aar/library-release.aar")
