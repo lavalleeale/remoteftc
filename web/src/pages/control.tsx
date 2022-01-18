@@ -17,6 +17,7 @@ import { groupBy, last, map } from "lodash";
 import RoomCodeForm from "../components/RoomCodeForm";
 import OpmodeForm from "../components/OpmodeForm";
 import ServerData from "../components/ServerData";
+import OpmodesFilter from "../components/OpmodesFilter";
 
 function controllerFromGamepad(gamepad: Gamepad) {
   return {
@@ -61,6 +62,10 @@ const opmodeValidationSchema = Yup.object().shape({
 const Proxy = () => {
   const [gamepad1, setGamepad1] = useState<number | null>(null);
   const [gamepad2, setGamepad2] = useState<number | null>(null);
+  const [filter, setFilter] = useState<filter>({
+    flavor: { TELEOP: false, AUTONOMOUS: false },
+    groups: [],
+  });
   const [kbController, setKbController] = useState<controller>({
     ...emptyController,
     index: 5,
@@ -73,7 +78,6 @@ const Proxy = () => {
   const opmodeFormik = useFormik({
     validationSchema: opmodeValidationSchema,
     onSubmit: (values) => {
-      console.log(values);
       ws?.send(
         JSON.stringify({
           type: "INIT_OPMODE",
@@ -90,7 +94,6 @@ const Proxy = () => {
     validationSchema: roomCodeValidationSchema,
     onSubmit: (values) => {
       ws?.send(JSON.stringify({ type: "joinroom", roomcode: values.roomCode }));
-      console.log(values.roomCode);
     },
     initialValues: {
       roomCode: "",
@@ -131,7 +134,6 @@ const Proxy = () => {
 
   useEffect(() => {
     function setKey(key: String, float: number, bool: boolean) {
-      console.log(key, float, bool);
       switch (key) {
         case "w":
           setKbController({ ...kbController, left_stick_y: float });
@@ -286,6 +288,9 @@ const Proxy = () => {
       }/custom`
     );
     ws.addEventListener("message", function (event) {
+      if (window.localStorage.getItem("filter")) {
+        setFilter(JSON.parse(window.localStorage.getItem("filter")!));
+      }
       const data = JSON.parse(event.data);
       switch (data.type) {
         case "SEND_STATUS":
@@ -305,6 +310,10 @@ const Proxy = () => {
               groupName,
               opmodes,
               active: true,
+            })).map((group) => ({
+              ...group,
+              groupName:
+                group.groupName === "$$$$$$$" ? "Default" : group.groupName,
             }))
           );
           break;
@@ -334,39 +343,40 @@ const Proxy = () => {
             <Row>
               <Col>
                 <Card className="w-50 h-100 m-3">
+                  <Card.Header as="h5" className="text-center">
+                    Opmode Controls
+                    <Button
+                      style={{ float: "right" }}
+                      variant="link"
+                      onClick={() => setShowingFilter(true)}
+                    >
+                      <i className="icon bi-gear-wide-connected color-primary text-dark" />
+                    </Button>
+                  </Card.Header>
                   <Card.Body>
-                    <Card.Title>Opmode Controls</Card.Title>
                     <Container fluid className="d-grid">
-                      <Modal
-                        show={showingFilter}
-                        onHide={() => setShowingFilter(false)}
-                      >
-                        <Modal.Header closeButton>
-                          <Modal.Title>Modal heading</Modal.Title>
-                        </Modal.Header>
-                        <Modal.Body>
-                          Woohoo, you're reading this text in a modal!
-                        </Modal.Body>
-                        <Modal.Footer>
-                          <Button
-                            variant="secondary"
-                            onClick={() => setShowingFilter(false)}
-                          >
-                            Close
-                          </Button>
-                          <Button
-                            variant="primary"
-                            onClick={() => setShowingFilter(false)}
-                          >
-                            Save Changes
-                          </Button>
-                        </Modal.Footer>
-                      </Modal>
+                      <OpmodesFilter
+                        showingFilter={showingFilter}
+                        setShowingFilter={setShowingFilter}
+                        opmodes={opmodes}
+                        initialFilter={filter}
+                        applyFilter={(newFilter: filter, persist: boolean) => {
+                          setShowingFilter(false);
+                          setFilter(newFilter);
+                          if (persist) {
+                            window.localStorage.setItem(
+                              "filter",
+                              JSON.stringify(newFilter)
+                            );
+                          }
+                        }}
+                      />
                       <Row>
                         <OpmodeForm
                           formik={opmodeFormik}
                           opmodes={opmodes}
                           robotStatus={robotStatus}
+                          filter={filter}
                         />
                       </Row>
                       {robotStatus !== null &&

@@ -2,16 +2,23 @@ import { FormikErrors } from "formik";
 import React from "react";
 import { Form, FloatingLabel, Button, Row } from "react-bootstrap";
 
-const stoppedOpmode = {
-  flavor: "AUTONOMOUS",
-  group: "$$$$$$$",
-  name: "$Stop$Robot$",
-} as opmode;
+function applyFilter(groups: opmodeGroup[], filter: filter) {
+  return groups
+    .map((group) => ({
+      ...group,
+      opmodes: group.opmodes.filter((opmode) => !filter.flavor[opmode.flavor]),
+    }))
+    .filter(
+      (group) =>
+        group.opmodes.length !== 0 && !filter.groups.includes(group.groupName)
+    );
+}
 
 const OpmodeForm = ({
   formik,
   opmodes,
   robotStatus,
+  filter,
 }: {
   formik: {
     handleChange: (e: React.ChangeEvent<any>) => void;
@@ -21,6 +28,7 @@ const OpmodeForm = ({
   };
   opmodes: opmodeGroup[];
   robotStatus: robotStatus | null;
+  filter: filter;
 }) => {
   return (
     <Form
@@ -43,15 +51,8 @@ const OpmodeForm = ({
           disabled={opmodes === undefined}
         >
           <option value="$Stop$Robot$">None</option>
-          {opmodes.map((group) => (
-            <optgroup
-              label={
-                group.groupName === stoppedOpmode.group
-                  ? "Default"
-                  : group.groupName
-              }
-              key={group.groupName}
-            >
+          {applyFilter(opmodes, filter).map((group) => (
+            <optgroup label={group.groupName} key={group.groupName}>
               {group.opmodes.map((opmode) => (
                 <option value={opmode.name} key={opmode.name}>
                   {opmode.name}
