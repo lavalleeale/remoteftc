@@ -21,7 +21,7 @@ jobs:
           push: false
           tags: lavalleeale/remoteftc:latest
   buildelectron:
-  name: "Build Electron"
+    name: "Build Electron"
     defaults:
       run:
         shell: bash
