@@ -1,6 +1,6 @@
 buildscript {
-    ext.remoteftc_version = '0.2.0'
 }
+ext.remoteftc_version = '0.2.27'
 
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'

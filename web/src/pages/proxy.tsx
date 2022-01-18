@@ -1,5 +1,5 @@
-import { Container, Stack } from 'react-bootstrap';
-import React from 'react';
+import { Container, Stack } from "react-bootstrap";
+import React from "react";
 import { useEffect, useState } from "react";
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { emptyController } from "../shared/controller";
@@ -10,7 +10,6 @@ const Control = () => {
   const [robotStatus, setRobotStatus] = useState(false);
 
   useEffect(() => {
-    var robot: ReconnectingWebSocket | null;
     var robotControl: ReconnectingWebSocket | null;
     var controller1 = emptyController;
     var controller2 = emptyController;
@@ -38,32 +37,28 @@ const Control = () => {
           }
           break;
         default:
-          if (robot?.readyState === WebSocket.OPEN) {
-            robot!.send(event.data);
+          if (robotControl?.readyState === WebSocket.OPEN) {
+            robotControl!.send(event.data);
           }
           break;
       }
     });
     ws.addEventListener("open", () => {
       ws.send("proxy");
-      const ROBOT_ADDRESS = "192.168.43.1";
-      robot = new ReconnectingWebSocket(`ws://${ROBOT_ADDRESS}:8000/`);
+      const ROBOT_ADDRESS = "localhost";
       robotControl = new ReconnectingWebSocket(`ws://${ROBOT_ADDRESS}:6969`);
-      robot.addEventListener("open", function (event) {
+      robotControl.addEventListener("open", function (event) {
         setRobotStatus(true);
       });
-      robot.addEventListener("close", function (event) {
+      robotControl.addEventListener("close", function (event) {
         setRobotStatus(false);
       });
-      robot.addEventListener("message", function (event) {
+      robotControl.addEventListener("message", function (event) {
         ws!.send(event.data);
       });
     });
     var interval: NodeJS.Timer;
     interval = setInterval(() => {
-      if (robot?.readyState === WebSocket.OPEN) {
-        robot!.send(JSON.stringify({ type: "GET_ROBOT_STATUS" }));
-      }
       if (robotControl?.readyState === WebSocket.OPEN) {
         robotControl.send(
           JSON.stringify({
@@ -76,7 +71,6 @@ const Control = () => {
     }, 50);
     return () => {
       ws.close();
-      robot?.close();
       robotControl?.close();
       setRobotStatus(false);
       clearInterval(interval);
@@ -86,9 +80,13 @@ const Control = () => {
   return (
     <Container fluid className="d-grid h-100 p-2">
       <ul className="list-group list-group-flush">
-        <li className="list-group-item">Room code: {roomCode || "Room code not found!"}</li>
+        <li className="list-group-item">
+          Room code: {roomCode || "Room code not found!"}
+        </li>
         <li className="list-group-item">Watchers: {watcherCount}</li>
-        <li className="list-group-item">Robot status: {robotStatus ? "Connected" : "Disconnected"}</li>
+        <li className="list-group-item">
+          Robot status: {robotStatus ? "Connected" : "Disconnected"}
+        </li>
       </ul>
     </Container>
   );

@@ -1,8 +1,18 @@
-import { Alert, Button, Container, Form, Row, Col } from "react-bootstrap";
+import {
+  Alert,
+  Button,
+  Container,
+  Form,
+  Row,
+  Col,
+  Modal,
+  FloatingLabel,
+} from "react-bootstrap";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import React, { useState, useEffect } from "react";
 import { controller, emptyController } from "../shared/controller";
+import { groupBy, last, map } from "lodash";
 
 function controllerFromGamepad(gamepad: Gamepad) {
   return {
@@ -40,16 +50,28 @@ const roomCodeValidationSchema = Yup.object().shape({
 
 const opmodeValidationSchema = Yup.object().shape({
   selectedOpmode: Yup.string()
-    .required("Please enter a room code")
+    .required("A valid Opmode must be selected")
     .notOneOf(["", "$Stop$Robot$"], "A valid Opmode must be selected"),
 });
 
 type robotStatus = {
-  activeOpMode: string;
-  activeOpModeStatus: "RUNNING" | "INIT" | "STOPPED";
+  opModeName: string;
+  status: "RUNNING" | "INIT" | "STOPPED";
   errorMessage: string;
   warningMessage: string;
 };
+type opmode = {
+  flavor: "TELEOP" | "AUTONOMOUS";
+  group: string;
+  name: string;
+  source: undefined | "ANDROID_STUDIO" | "BLOCKLY" | "ONBOTJAVA";
+};
+type opmodeGroup = { groupName: string; opmodes: opmode[]; active: boolean };
+const stoppedOpmode = {
+  flavor: "AUTONOMOUS",
+  group: "$$$$$$$",
+  name: "$Stop$Robot$",
+} as opmode;
 
 const Proxy = () => {
   const [gamepad1, setGamepad1] = useState<number | null>(null);
@@ -58,18 +80,20 @@ const Proxy = () => {
     ...emptyController,
     index: 5,
   });
-  const [opmodes, setOpmodes] = useState<string[] | null>(null);
+  const [opmodes, setOpmodes] = useState<opmodeGroup[]>([]);
   const [robotStatus, setRobotStatus] = useState<robotStatus | null>(null);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [wsStatus, setWsStatus] = useState(false);
   const [watcherCount, setWatcherCount] = useState<number | null>(null);
+  const [showingFilter, setShowingFilter] = useState(false);
+
   const opmodeFormik = useFormik({
     validationSchema: opmodeValidationSchema,
     onSubmit: (values) => {
       console.log(values);
       ws?.send(
         JSON.stringify({
-          type: "INIT_OP_MODE",
+          type: "INIT_OPMODE",
           opModeName: values.selectedOpmode,
         })
       );
@@ -77,6 +101,7 @@ const Proxy = () => {
     initialValues: {
       selectedOpmode: "$Stop$Robot$",
     },
+    validateOnMount: false,
   });
   const roomCodeFormik = useFormik({
     validationSchema: roomCodeValidationSchema,
@@ -235,7 +260,7 @@ const Proxy = () => {
                 })
               );
             }
-            setGamepad2(null);
+            setGamepad1(null);
             return;
           }
         } else {
@@ -269,7 +294,7 @@ const Proxy = () => {
   }, [gamepad1, gamepad2, ws, kbController]);
 
   useEffect(() => {
-    var hasOpmode = false;
+    var lastOpMode = "$Stop$Robot$";
     const ws = new WebSocket(
       `${
         process.env.NODE_ENV === "production"
@@ -286,23 +311,28 @@ const Proxy = () => {
         case "watcherCount":
           setWatcherCount(data.value);
           break;
-        case "RECEIVE_ROBOT_STATUS":
-          setRobotStatus(data.status);
-          if (!hasOpmode) {
-            if (data.status?.activeOpMode !== "$Stop$Robot$") {
-              opmodeFormik.setFieldValue(
-                "selectedOpmode",
-                data.status?.activeOpMode
-              );
-            }
-            hasOpmode = true;
+        case "SEND_STATUS":
+          setRobotStatus(data);
+          if (data.activeOpMode && data.activeOpMode !== lastOpMode) {
+            lastOpMode = data.activeOpMode;
+            opmodeFormik.setFieldValue("selectedOpmode", data.activeOpMode);
           }
           break;
         case "opmodes":
-          setOpmodes(data.value);
+          const groups = groupBy(
+            data.value as opmode[],
+            (opmode) => opmode.group
+          );
+          setOpmodes(
+            map(groups, (opmodes, groupName) => ({
+              groupName,
+              opmodes,
+              active: true,
+            }))
+          );
           break;
         case "disconnect":
-          setOpmodes(null);
+          setOpmodes([]);
           setWatcherCount(null);
           setRobotStatus(null);
           roomCodeFormik.setFieldValue("roomCode", "");
@@ -344,79 +374,113 @@ const Proxy = () => {
               </Form.Control.Feedback>
             </Form.Group>
             <div className="d-grid">
-              <Button variant="primary" type="submit" disabled={!wsStatus}>
+              <Button
+                className={!wsStatus ? "disabled" : ""}
+                variant="primary"
+                type="submit"
+              >
                 Submit
               </Button>
             </div>
           </Form>
         ) : (
           <Container fluid className="d-grid h-100">
+            <Modal show={showingFilter} onHide={() => setShowingFilter(false)}>
+              <Modal.Header closeButton>
+                <Modal.Title>Modal heading</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                Woohoo, you're reading this text in a modal!
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowingFilter(false)}
+                >
+                  Close
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => setShowingFilter(false)}
+                >
+                  Save Changes
+                </Button>
+              </Modal.Footer>
+            </Modal>
+            {/* START */}
             <Form
               onSubmit={opmodeFormik.handleSubmit}
               className="text-center p-3 w-100"
             >
-              <Form.Group controlId="formOpmode" className="mb-3">
-                <Form.Label>Select Opmode</Form.Label>
+              <FloatingLabel className="mb-3" label="Select Opmode">
                 <Form.Select
                   isInvalid={opmodeFormik.errors.selectedOpmode != undefined}
                   name="selectedOpmode"
-                  onChange={opmodeFormik.handleChange}
+                  onChange={(e) => {
+                    opmodeFormik.handleChange(e);
+                    console.log(opmodeFormik.values);
+                  }}
                   value={opmodeFormik.values.selectedOpmode}
-                  disabled={
-                    robotStatus?.activeOpMode !== "$Stop$Robot$" ||
-                    opmodes === undefined
-                  }
+                  disabled={opmodes === undefined}
                 >
-                  {[...(opmodes || []), "$Stop$Robot$"].map((opmode) => (
-                    <option value={opmode} key={opmode}>
-                      {opmode === "$Stop$Robot$" ? "None" : opmode}
-                    </option>
+                  <option value="$Stop$Robot$">None</option>
+                  {opmodes.map((group) => (
+                    <optgroup
+                      label={
+                        group.groupName === stoppedOpmode.group
+                          ? "Default"
+                          : group.groupName
+                      }
+                      key={group.groupName}
+                    >
+                      {group.opmodes.map((opmode) => (
+                        <option value={opmode.name} key={opmode.name}>
+                          {opmode.name}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </Form.Select>
                 <Form.Control.Feedback type="invalid">
                   {opmodeFormik.errors.selectedOpmode}
                 </Form.Control.Feedback>
-              </Form.Group>
-              <div className="d-grid">
-                {robotStatus === null ||
-                robotStatus?.activeOpMode === "$Stop$Robot$" ? (
-                  <Button variant="primary" type="submit">
-                    Init
-                  </Button>
-                ) : (
-                  <Row>
-                    {robotStatus?.activeOpModeStatus !== "STOPPED" ? (
-                      <Button
-                        variant={
-                          robotStatus?.activeOpModeStatus === "RUNNING"
-                            ? "danger"
-                            : "success"
-                        }
-                        onClick={() => {
-                          ws!.send(
-                            JSON.stringify({
-                              type: `${
-                                robotStatus?.activeOpModeStatus === "RUNNING"
-                                  ? "STOP"
-                                  : "START"
-                              }_OP_MODE`,
-                            })
-                          );
-                        }}
-                      >
-                        {robotStatus?.activeOpModeStatus === "RUNNING"
-                          ? "Stop"
-                          : "Start"}
-                      </Button>
-                    ) : (
-                      <Button variant="danger" disabled>
-                        STOPPED
-                      </Button>
-                    )}
-                  </Row>
-                )}
-              </div>
+              </FloatingLabel>
+              {(robotStatus === null ||
+                robotStatus?.opModeName === "$Stop$Robot$") && (
+                <Button variant="primary" type="submit" className="w-100">
+                  Init
+                </Button>
+              )}
             </Form>
+            {robotStatus !== null &&
+              robotStatus?.opModeName !== "$Stop$Robot$" && (
+                <Row>
+                  {robotStatus?.status !== "STOPPED" ? (
+                    <Button
+                      variant={
+                        robotStatus?.status === "RUNNING" ? "danger" : "success"
+                      }
+                      onClick={() => {
+                        ws!.send(
+                          JSON.stringify({
+                            type: `${
+                              robotStatus?.status === "RUNNING"
+                                ? "STOP"
+                                : "START"
+                            }_OPMODE`,
+                          })
+                        );
+                      }}
+                    >
+                      {robotStatus?.status === "RUNNING" ? "Stop" : "Start"}
+                    </Button>
+                  ) : (
+                    <Button variant="danger" disabled>
+                      STOPPED
+                    </Button>
+                  )}
+                </Row>
+              )}
             <Row>
               <Col className="text-center">
                 {`Gamepad 1: ${
