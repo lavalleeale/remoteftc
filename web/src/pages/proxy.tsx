@@ -45,7 +45,7 @@ const Control = () => {
     });
     ws.addEventListener("open", () => {
       ws.send("proxy");
-      const ROBOT_ADDRESS = "localhost";
+      const ROBOT_ADDRESS = "192.168.43.1";
       robotControl = new ReconnectingWebSocket(`ws://${ROBOT_ADDRESS}:6969`);
       robotControl.addEventListener("open", function (event) {
         setRobotStatus(true);
