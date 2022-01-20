@@ -2,14 +2,8 @@
   "extends": "./paths.json",
   "compilerOptions": {
     "target": "ESNext",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "types": [
-        "vite/client",
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "types": ["vite/client"],
     "allowJs": true,
     "skipLibCheck": false,
     "esModuleInterop": false,
@@ -22,6 +16,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
-  },
+    "jsx": "react"
+  }
 }

@@ -1,0 +1,26 @@
+{
+  "start": {
+    "errorMessage": "",
+    "opModeName": "$Stop$Robot$",
+    "state": "RUNNING",
+    "status": "INIT",
+    "warningMessage": "libOpenCvAndroid453.so was not found, any OpenCV-enabled OpModes will crash. Please copy it to the FIRST folder on the internal storage",
+    "type": "SEND_STATUS"
+  },
+  "init": {
+    "errorMessage": "",
+    "opModeName": "Final TeleOP",
+    "state": "RUNNING",
+    "status": "INIT",
+    "warningMessage": "libOpenCvAndroid453.so was not found, any OpenCV-enabled OpModes will crash. Please copy it to the FIRST folder on the internal storage",
+    "type": "SEND_STATUS"
+  },
+  "started": {
+    "errorMessage": "",
+    "opModeName": "Final TeleOP",
+    "state": "RUNNING",
+    "status": "RUNNING",
+    "warningMessage": "libOpenCvAndroid453.so was not found, any OpenCV-enabled OpModes will crash. Please copy it to the FIRST folder on the internal storage",
+    "type": "SEND_STATUS"
+  }
+}

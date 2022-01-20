@@ -1,0 +1,192 @@
+{
+  "type": "opmodes",
+  "value": [
+    {
+      "flavor": "TELEOP",
+      "group": "$$$$$$$",
+      "name": "Final TeleOP",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "TELEOP",
+      "group": "drive",
+      "name": "TrackingWheelLateralDistanceTuner",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "$$$$$$$",
+      "name": "Red Auto NO Duck",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "drive",
+      "name": "MaxVelocityTuner",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "$$$$$$$",
+      "name": "Simple Auto",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "TELEOP",
+      "group": "$$$$$$$",
+      "name": "Reeds Teleop Thing",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "drive",
+      "name": "FollowerPIDTuner",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "$$$$$$$",
+      "name": "RedAutoTimeBased",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "drive",
+      "name": "DriveVelocityPIDTuner",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "$$$$$$$",
+      "name": "Blue Auto NO Duck",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "drive",
+      "name": "StraightTest",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "drive",
+      "name": "ManualFeedforwardTuner",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "drive",
+      "name": "MaxAngularVeloTuner",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "$$$$$$$",
+      "name": "Time Based Auto (Blue)",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "$$$$$$$",
+      "name": "Time Based Auto (Red)",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "TELEOP",
+      "group": "drive",
+      "name": "LocalizationTest",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "Calibration",
+      "name": "Calibrate Arm",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "$$$$$$$",
+      "name": "TimeBasedAuto",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "drive",
+      "name": "StrafeTest",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "drive",
+      "name": "SplineTest",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "$$$$$$$",
+      "name": "TestRoadRunnerAuto",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "$$$$$$$",
+      "name": "Auto for Scarab match",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "TELEOP",
+      "group": "$$$$$$$",
+      "name": "TensorFlow Object Detection Test",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "$$$$$$$",
+      "name": "Red Auto with Duck",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "drive",
+      "name": "AutomaticFeedforwardTuner",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "drive",
+      "name": "TrackWidthTuner",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "$$$$$$$",
+      "name": "Vision Test",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "drive",
+      "name": "TurnTest",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "$$$$$$$",
+      "name": "Test Auto",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "drive",
+      "name": "BackAndForth",
+      "source": "ANDROID_STUDIO"
+    },
+    {
+      "flavor": "AUTONOMOUS",
+      "group": "Tests",
+      "name": "Websocket Test",
+      "source": "ANDROID_STUDIO"
+    },
+    { "flavor": "TELEOP", "group": "dash", "name": "Enable/Disable Dashboard" }
+  ]
+}
