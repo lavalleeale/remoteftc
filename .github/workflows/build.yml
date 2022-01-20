@@ -34,6 +34,14 @@ jobs:
     steps:
       - uses: actions/checkout@master
 
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+
       - uses: actions/setup-node@master
         with:
           node-version: 16.13
@@ -77,6 +85,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
       - name: Setup dependancy caching
         uses: pnpm/action-setup@v2.0.1
         with:
