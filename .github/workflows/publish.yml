@@ -162,8 +162,11 @@ jobs:
     strategy:
       matrix:
         target:
-          ["RemoteFTC-win-x64", "RemoteFTC-mac-x64", "RemoteFTC-linux-x86_64"]
-
+          [
+            { "name": "RemoteFTC-win-x64", "extension": "exe" },
+            { "name": "RemoteFTC-mac-x64", "extension": "dmg" },
+            { "name": "RemoteFTC-linux-x86_64", "extension": "AppImage" },
+          ]
     steps:
       - uses: actions/checkout@v2
 
@@ -179,6 +182,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.publishclientrelease.outputs.upload_url }}
-          asset_path: ${{steps.download.outputs.download-path}}/${{ matrix.target }}.zip
-          asset_name: ${{ matrix.target }}.zip
-          asset_content_type: application/zip
+          asset_path: ${{steps.download.outputs.download-path}}/${{ matrix.target.name }}.${{ matrix.target.extension }}
+          asset_name: ${{ matrix.target.name }}.${{ matrix.target.extension }}
+          asset_content_type: application/octet-stream
