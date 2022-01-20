@@ -68,3 +68,23 @@ jobs:
         with:
           name: RemoteFTC-win-x64
           path: web/dist/RemoteFTC-win-x64.exe
+  test:
+    name: "Test with Cypress"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup dependancy caching
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.27.1
+      - name: Install dependencies
+        run: pnpm --dir web i
+
+      - name: Cypress run
+        uses: cypress-io/github-action@v2
+        with:
+          install: false
+          build: pnpm build
+          start: pnpm start
+          working-directory: web
