@@ -179,6 +179,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.publishclientrelease.outputs.upload_url }}
-          asset_path: ${{steps.download.outputs.download-path}}/${{ matrix.target }}
+          asset_path: ${{steps.download.outputs.download-path}}/${{ matrix.target }}.zip
           asset_name: ${{ matrix.target }}.zip
           asset_content_type: application/zip
