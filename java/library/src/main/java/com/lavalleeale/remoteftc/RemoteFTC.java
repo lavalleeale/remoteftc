@@ -5,6 +5,7 @@ import android.content.Context;
 import com.lavalleeale.remoteftc.messages.GamepadStateMessage;
 import com.lavalleeale.remoteftc.messages.InitOpmodeMessage;
 import com.lavalleeale.remoteftc.messages.OpmodesMessage;
+import com.lavalleeale.remoteftc.messages.StartOpmodeMessage;
 import com.lavalleeale.remoteftc.messages.StatusMessage;
 import com.qualcomm.ftccommon.FtcEventLoop;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -49,7 +50,9 @@ public class RemoteFTC implements OpModeManagerImpl.Notifications {
 
     final Runnable sendStatus = new Runnable() {
         public void run() {
-            instance.webserver.sendAll(new StatusMessage(opModeManager.getActiveOpModeName(), opModeStatus, RobotLog.getGlobalWarningMessage().message, RobotLog.getGlobalErrorMsg(), opModeManager.getRobotState()));
+            if (instance.webserver != null && instance.opModeManager != null) {
+                instance.webserver.sendAll(new StatusMessage(opModeManager.getActiveOpModeName(), opModeStatus, RobotLog.getGlobalWarningMessage().message, RobotLog.getGlobalErrorMsg(), opModeManager.getRobotState()));
+            }
         }
     };
 
