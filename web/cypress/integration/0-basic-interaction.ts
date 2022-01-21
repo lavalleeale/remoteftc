@@ -52,8 +52,15 @@ describe("Basic Interaction", () => {
     cy.waitFor(".form-select");
     cy.get(".invalid-feedback").should("not.be.visible");
     cy.get(".form-select").select(1);
+    cy.contains("Warning").should("be.visible");
+    cy.contains("Error").should("be.visible");
     cy.contains("Init").click();
+    cy.contains("Warning").should("be.visible");
+    cy.contains("Error").should("not.exist");
     cy.contains("Start").click();
+    cy.contains("Start").should("be.disabled");
+    cy.contains("Warning").should("not.exist");
+    cy.contains("Error").should("be.visible");
     cy.contains("Stop").click();
     cy.get(".invalid-feedback").should("be.visible");
   });
