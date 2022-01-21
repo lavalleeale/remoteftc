@@ -15,45 +15,74 @@ import opmodes from "../fixtures/opmodes.json";
 import status from "../fixtures/status.json";
 
 describe("Basic Interaction", () => {
-  it("displays two todo items by default", () => {
-    const server = new Server("ws://localhost:4000/custom");
-    server.on("connection", (ws) => {
-      console.log("connection");
-      ws.on("message", (message) => {
-        const decoded = JSON.parse(message as string);
-        console.log(decoded);
-        switch (decoded.type) {
-          case "joinroom":
-            ws.send(JSON.stringify(opmodes));
-            ws.send(JSON.stringify(status.start));
-            break;
-          case "INIT_OPMODE":
-            ws.send(JSON.stringify(status.init));
-            break;
-          case "START_OPMODE":
-            ws.send(JSON.stringify(status.started));
-            break;
-          case "STOP_OPMODE":
-            ws.send(JSON.stringify(status.start));
-            break;
-        }
-      });
+  const server = new Server("ws://localhost:4000/custom");
+  server.on("connection", (ws) => {
+    console.log("connection");
+    ws.on("message", (message) => {
+      const decoded = JSON.parse(message as string);
+      console.log(decoded);
+      switch (decoded.type) {
+        case "joinroom":
+          ws.send(JSON.stringify(opmodes));
+          ws.send(JSON.stringify(status.start));
+          break;
+        case "INIT_OPMODE":
+          ws.send(JSON.stringify(status.init));
+          break;
+        case "START_OPMODE":
+          ws.send(JSON.stringify(status.started));
+          break;
+        case "STOP_OPMODE":
+          ws.send(JSON.stringify(status.start));
+          break;
+      }
     });
+  });
+  it("joins a room", () => {
     cy.visit("http://localhost:3000", {
       onBeforeLoad: (win) => {
         cy.stub(win, "WebSocket").callsFake((url) => new WebSocket(url));
       },
     });
     cy.get('[href="#/control"]').click();
-    cy.wait(1000);
     cy.get("#formRoomCode").type("111111");
     cy.get(".btn").click();
+  });
+  it("selects opmodes", () => {
     cy.waitFor(".form-select");
     cy.get(".invalid-feedback").should("not.be.visible");
     cy.get(".form-select").select(1);
+    cy.contains("Warning").should("be.visible");
+    cy.contains("Error").should("be.visible");
     cy.contains("Init").click();
+    cy.contains("Warning").should("be.visible");
+    cy.contains("Error").should("not.exist");
     cy.contains("Start").click();
+    cy.contains("Start").should("be.disabled");
+    cy.contains("Warning").should("not.exist");
+    cy.contains("Error").should("be.visible");
     cy.contains("Stop").click();
     cy.get(".invalid-feedback").should("be.visible");
+  });
+  it("applies filters", () => {
+    cy.get(".form-select").find("option").should("have.length", 33);
+    cy.get(".card-header > .btn").click();
+    cy.get("#teleop-switch").click();
+    cy.contains("Apply Temporarily").click();
+    cy.get(".form-select").find("option").should("have.length", 27);
+  });
+  it("saves filters", () => {
+    expect(localStorage.getItem("filter")).to.be.null;
+    cy.get(".card-header > .btn").click();
+    cy.contains("Save Permanently")
+      .click()
+      .should(() => {
+        expect(localStorage.getItem("filter")).to.be.eq(
+          JSON.stringify({
+            flavor: { TELEOP: true, AUTONOMOUS: false },
+            groups: [],
+          })
+        );
+      });
   });
 });
