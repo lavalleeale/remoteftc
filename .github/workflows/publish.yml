@@ -185,3 +185,43 @@ jobs:
           asset_path: ${{steps.download.outputs.download-path}}/${{ matrix.target.name }}.${{ matrix.target.extension }}
           asset_name: ${{ matrix.target.name }}.${{ matrix.target.extension }}
           asset_content_type: application/octet-stream
+  publishweb:
+    name: "Publish To Netlify"
+    needs: test
+    defaults:
+      run:
+        shell: bash
+        working-directory: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+
+      - uses: actions/setup-node@master
+        with:
+          node-version: 16.13
+
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+
+      - uses: pnpm/action-setup@master
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: pnpm i
+
+      - name: Build
+        run: pnpm build
+
+      - name: Publish
+        uses: netlify/actions/cli@master
+        with:
+          args: deploy --dir=web/dist
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
