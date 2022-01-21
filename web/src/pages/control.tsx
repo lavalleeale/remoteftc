@@ -70,7 +70,7 @@ const Proxy = () => {
     ...emptyController,
     index: 5,
   });
-  const [opmodes, setOpmodes] = useState<opmodeGroup[]>([]);
+  const [opmodes, setOpmodes] = useState<opmodeGroup[] | null>(null);
   const [robotStatus, setRobotStatus] = useState<robotStatus | null>(null);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [showingFilter, setShowingFilter] = useState(false);
@@ -336,7 +336,7 @@ const Proxy = () => {
   return (
     <div>
       <Container fluid className="d-grid h-100">
-        {opmodes.length === 0 ? (
+        {!opmodes ? (
           <RoomCodeForm formik={roomCodeFormik} />
         ) : (
           <Container fluid className="d-grid">
@@ -430,7 +430,7 @@ const Proxy = () => {
                     Robot Data
                   </Card.Header>
                   <Card.Body>
-                    State: {robotStatus?.state}
+                    State: {robotStatus?.state || "Unknown"}
                     {robotStatus?.warningMessage && (
                       <Col className="text-center">
                         <Alert variant="warning">

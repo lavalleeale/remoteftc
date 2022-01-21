@@ -50,6 +50,7 @@ wss.on("connection", (ws: MyWebSocket) => {
         })
       );
       ws.watchers = [];
+      ws.opmodes = [];
     } else {
       let genericData = JSON.parse(message) as clientToServer;
       if (genericData.type === "joinroom") {
@@ -71,6 +72,9 @@ wss.on("connection", (ws: MyWebSocket) => {
       } else if (genericData.type === "SEND_OPMODES") {
         const data = genericData as opmodes;
         ws.opmodes = data.opmodes;
+        ws.watchers!.map((watcher) =>
+          watcher.send(JSON.stringify({ type: "opmodes", value: data.opmodes }))
+        );
       } else if (ws.watchers) {
         ws.watchers.map((watcher) => watcher.send(message));
       } else if (ws.proxyuuid) {
