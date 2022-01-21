@@ -21,9 +21,7 @@ const RoomCodeForm = ({
       <Form.Group className="mb-3" controlId="formRoomCode">
         <Form.Label>Room Code</Form.Label>
         <Form.Control
-          type="number"
           name="roomCode"
-          placeholder="000000"
           value={formik.values.roomCode}
           isInvalid={formik.errors.roomCode != undefined}
           onChange={formik.handleChange}

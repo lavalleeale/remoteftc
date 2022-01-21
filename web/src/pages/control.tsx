@@ -1,19 +1,9 @@
-import {
-  Alert,
-  Button,
-  Container,
-  Form,
-  Row,
-  Col,
-  Modal,
-  FloatingLabel,
-  Card,
-} from "react-bootstrap";
+import { Alert, Button, Container, Row, Col, Card } from "react-bootstrap";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import React, { useState, useEffect } from "react";
 import { controller, emptyController } from "../shared/controller";
-import { groupBy, last, map } from "lodash";
+import { groupBy, map } from "lodash";
 import RoomCodeForm from "../components/RoomCodeForm";
 import OpmodeForm from "../components/OpmodeForm";
 import ServerData from "../components/ServerData";
@@ -47,10 +37,7 @@ function controllerFromGamepad(gamepad: Gamepad) {
 }
 
 const roomCodeValidationSchema = Yup.object().shape({
-  roomCode: Yup.string()
-    .required("Please enter a room code")
-    .min(6, "Room code must be exactly 6 digits")
-    .max(6, "Room code must be exactly 6 digits"),
+  roomCode: Yup.string().required("Please enter a room code"),
 });
 
 const opmodeValidationSchema = Yup.object().shape({
@@ -59,7 +46,7 @@ const opmodeValidationSchema = Yup.object().shape({
     .notOneOf(["", "$Stop$Robot$"], "A valid Opmode must be selected"),
 });
 
-const Proxy = () => {
+const Control = () => {
   const [gamepad1, setGamepad1] = useState<number | null>(null);
   const [gamepad2, setGamepad2] = useState<number | null>(null);
   const [filter, setFilter] = useState<filter>({
@@ -318,7 +305,7 @@ const Proxy = () => {
           );
           break;
         case "disconnect":
-          setOpmodes([]);
+          setOpmodes(null);
           setRobotStatus(null);
           roomCodeFormik.setFieldValue("roomCode", "");
           break;
@@ -456,4 +443,4 @@ const Proxy = () => {
   );
 };
 
-export default Proxy;
+export default Control;
