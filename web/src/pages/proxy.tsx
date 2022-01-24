@@ -13,6 +13,7 @@ const roomCodeValidationSchema = Yup.object().shape({
 const Proxy = () => {
   const [watcherCount, setWatcherCount] = useState(0);
   const [roomCode, setRoomCode] = useState<number | string | null>(null);
+  const [prevCodes, setPrevCodes] = useState<string[] | null>(null);
   const [robotStatus, setRobotStatus] = useState(false);
   const [ws, setWs] = useState<WebSocket | null>(null);
 
@@ -84,6 +85,16 @@ const Proxy = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const codes = localStorage.getItem("prevCodes");
+    console.log(codes);
+    if (codes) {
+      setPrevCodes(JSON.parse(codes));
+    } else {
+      setPrevCodes([]);
+    }
+  }, []);
+
   return (
     <Container fluid className="d-grid h-100 p-2">
       {roomCode ? (
@@ -102,6 +113,11 @@ const Proxy = () => {
             validationSchema={roomCodeValidationSchema}
             initialValues={{ roomCode: "" }}
             onSubmit={(e) => {
+              setPrevCodes([...prevCodes!, e.roomCode]);
+              localStorage.setItem(
+                "prevCodes",
+                JSON.stringify([...prevCodes!, e.roomCode])
+              );
               ws?.send(JSON.stringify({ type: "proxy", code: e.roomCode }));
             }}
           >
@@ -133,6 +149,21 @@ const Proxy = () => {
               </Form>
             )}
           </Formik>
+          {prevCodes && (
+            <ul>
+              {prevCodes.map((code) => (
+                <li key={code}>
+                  <a
+                    onClick={() =>
+                      ws?.send(JSON.stringify({ type: "proxy", code }))
+                    }
+                  >
+                    {code}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
           <Button
             onClick={() =>
               ws?.send(JSON.stringify({ type: "proxy", code: "random" }))
