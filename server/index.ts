@@ -26,6 +26,10 @@ wss.on("connection", (ws: MyWebSocket) => {
         ws.room.clients.map((watcher) =>
           watcher.send(JSON.stringify({ type: "disconnect" }))
         );
+        var index = rooms.indexOf(ws.room);
+        if (index !== -1) {
+          rooms.splice(index, 1);
+        }
       } else {
         const proxy = ws.room.proxy;
         ws.room.clients = ws.room.clients.filter(
