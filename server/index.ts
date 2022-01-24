@@ -65,10 +65,16 @@ wss.on("connection", (ws: MyWebSocket) => {
         watcher.send(JSON.stringify({ type: "opmodes", value: data.opmodes }))
       );
     } else if (genericData.type === "proxy") {
-      const code =
-        genericData.code === "random"
-          ? Math.floor(100000 + Math.random() * 900000)
-          : genericData.code;
+      const data = genericData as proxy;
+      var code: string | number;
+      if (rooms.find((room) => room.code == data.code)) {
+        code = Math.floor(100000 + Math.random() * 900000);
+      } else {
+        code =
+          data.code === "random"
+            ? Math.floor(100000 + Math.random() * 900000)
+            : data.code;
+      }
       const room = { proxy: ws, clients: [], code: code };
       rooms.push(room);
       ws.room = room;
