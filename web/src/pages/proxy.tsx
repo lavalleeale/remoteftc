@@ -5,6 +5,7 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 import { emptyController } from "../shared/controller";
 import { Formik } from "formik";
 import * as Yup from "yup";
+import RoomCodeForm from "../components/RoomCodeForm";
 
 const roomCodeValidationSchema = Yup.object().shape({
   roomCode: Yup.string().required("Please enter a room code"),
@@ -13,8 +14,8 @@ const roomCodeValidationSchema = Yup.object().shape({
 const Proxy = () => {
   const [watcherCount, setWatcherCount] = useState(0);
   const [roomCode, setRoomCode] = useState<number | string | null>(null);
-  const [prevCodes, setPrevCodes] = useState<string[] | null>(null);
   const [robotStatus, setRobotStatus] = useState(false);
+  const [roomCodeError, setRoomCodeError] = useState(false);
   const [ws, setWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
@@ -34,6 +35,7 @@ const Proxy = () => {
       switch (data.type) {
         case "roomcode":
           setRoomCode(data.value);
+          setRoomCodeError(false);
           break;
         case "watcherCount":
           setWatcherCount(data.value);
@@ -85,16 +87,6 @@ const Proxy = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const codes = localStorage.getItem("prevCodes");
-    console.log(codes);
-    if (codes) {
-      setPrevCodes(JSON.parse(codes));
-    } else {
-      setPrevCodes([]);
-    }
-  }, []);
-
   return (
     <Container fluid className="d-grid h-100 p-2">
       {roomCode ? (
@@ -109,66 +101,15 @@ const Proxy = () => {
         </ul>
       ) : (
         <>
-          <Formik
-            validationSchema={roomCodeValidationSchema}
-            initialValues={{ roomCode: "" }}
-            onSubmit={(e) => {
-              setPrevCodes([e.roomCode, ...prevCodes!].slice(0, 5));
-              localStorage.setItem(
-                "prevCodes",
-                JSON.stringify([e.roomCode, ...prevCodes!].slice(0, 5))
-              );
-              ws?.send(JSON.stringify({ type: "proxy", code: e.roomCode }));
+          <RoomCodeForm
+            handleRoomCode={function (roomCode: string): void {
+              ws?.send(JSON.stringify({ type: "proxy", code: roomCode }));
+              setRoomCodeError(true);
             }}
-          >
-            {({ values, errors, handleChange, handleSubmit }) => (
-              <Form onSubmit={handleSubmit} className="d-flex mb-3 mt-3 ">
-                <FloatingLabel
-                  className="w-75"
-                  controlId="formRoomCode"
-                  label="Room Code"
-                >
-                  <Form.Control
-                    name="roomCode"
-                    value={values.roomCode}
-                    isInvalid={errors.roomCode !== undefined}
-                    onChange={handleChange}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.roomCode}
-                  </Form.Control.Feedback>
-                </FloatingLabel>
-                <Button
-                  className="w-25"
-                  style={{ height: "calc(3.5rem + 2px)" }}
-                  variant="primary"
-                  type="submit"
-                >
-                  Custom Code
-                </Button>
-              </Form>
-            )}
-          </Formik>
-          {prevCodes && prevCodes.length > 0 && (
-            <div>
-              Previous Codes
-              <ul>
-                {prevCodes.map((code) => (
-                  <li key={code}>
-                    <a
-                      href="javascript:"
-                      onClick={() =>
-                        ws?.send(JSON.stringify({ type: "proxy", code }))
-                      }
-                    >
-                      {code}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+            error={roomCodeError}
+          />
           <Button
+            className="mt-3"
             onClick={() =>
               ws?.send(JSON.stringify({ type: "proxy", code: "random" }))
             }
