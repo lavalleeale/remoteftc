@@ -1,56 +1,17 @@
-import {
-  Alert,
-  Button,
-  Container,
-  Form,
-  Row,
-  Col,
-  Modal,
-  FloatingLabel,
-  Card,
-} from "react-bootstrap";
+import { Alert, Button, Container, Row, Col, Card } from "react-bootstrap";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import React, { useState, useEffect } from "react";
 import { controller, emptyController } from "../shared/controller";
-import { groupBy, last, map } from "lodash";
+import { groupBy, map } from "lodash";
 import RoomCodeForm from "../components/RoomCodeForm";
 import OpmodeForm from "../components/OpmodeForm";
 import ServerData from "../components/ServerData";
 import OpmodesFilter from "../components/OpmodesFilter";
-
-function controllerFromGamepad(gamepad: Gamepad) {
-  return {
-    left_stick_x: gamepad.axes[0],
-    left_stick_y: gamepad.axes[1],
-    right_stick_x: gamepad.axes[2],
-    right_stick_y: gamepad.axes[3],
-    dpad_up: gamepad.buttons[12].pressed,
-    dpad_down: gamepad.buttons[13].pressed,
-    dpad_left: gamepad.buttons[14].pressed,
-    dpad_right: gamepad.buttons[15].pressed,
-    a: gamepad.buttons[0].pressed,
-    b: gamepad.buttons[1].pressed,
-    x: gamepad.buttons[2].pressed,
-    y: gamepad.buttons[3].pressed,
-    guide: gamepad.buttons[16].pressed,
-    start: gamepad.buttons[9].pressed,
-    back: gamepad.buttons[8].pressed,
-    left_bumper: gamepad.buttons[4].pressed,
-    right_bumper: gamepad.buttons[5].pressed,
-    left_stick_button: gamepad.buttons[10].pressed,
-    right_stick_button: gamepad.buttons[11].pressed,
-    left_trigger: gamepad.buttons[6].pressed ? 1 : 0,
-    right_trigger: gamepad.buttons[7].pressed ? 1 : 0,
-    index: gamepad.index,
-  } as controller;
-}
+import { controllerFromGamepad } from "../../helpers/controller";
 
 const roomCodeValidationSchema = Yup.object().shape({
-  roomCode: Yup.string()
-    .required("Please enter a room code")
-    .min(6, "Room code must be exactly 6 digits")
-    .max(6, "Room code must be exactly 6 digits"),
+  roomCode: Yup.string().required("Please enter a room code"),
 });
 
 const opmodeValidationSchema = Yup.object().shape({
@@ -59,9 +20,10 @@ const opmodeValidationSchema = Yup.object().shape({
     .notOneOf(["", "$Stop$Robot$"], "A valid Opmode must be selected"),
 });
 
-const Proxy = () => {
+const Control = () => {
   const [gamepad1, setGamepad1] = useState<number | null>(null);
   const [gamepad2, setGamepad2] = useState<number | null>(null);
+  const [roomCodeError, setRoomCodeError] = useState(false);
   const [filter, setFilter] = useState<filter>({
     flavor: { TELEOP: false, AUTONOMOUS: false },
     groups: [],
@@ -89,15 +51,6 @@ const Proxy = () => {
       selectedOpmode: "$Stop$Robot$",
     },
     validateOnMount: false,
-  });
-  const roomCodeFormik = useFormik({
-    validationSchema: roomCodeValidationSchema,
-    onSubmit: (values) => {
-      ws?.send(JSON.stringify({ type: "joinroom", roomcode: values.roomCode }));
-    },
-    initialValues: {
-      roomCode: "",
-    },
   });
 
   useEffect(() => {
@@ -287,10 +240,10 @@ const Proxy = () => {
           : "ws://localhost:4000"
       }/custom`
     );
+    if (window.localStorage.getItem("filter")) {
+      setFilter(JSON.parse(window.localStorage.getItem("filter")!));
+    }
     ws.addEventListener("message", function (event) {
-      if (window.localStorage.getItem("filter")) {
-        setFilter(JSON.parse(window.localStorage.getItem("filter")!));
-      }
       const data = JSON.parse(event.data);
       switch (data.type) {
         case "SEND_STATUS":
@@ -301,6 +254,7 @@ const Proxy = () => {
           }
           break;
         case "opmodes":
+          setRoomCodeError(false);
           const groups = groupBy(
             data.value as opmode[],
             (opmode) => opmode.group
@@ -318,9 +272,8 @@ const Proxy = () => {
           );
           break;
         case "disconnect":
-          setOpmodes([]);
+          setOpmodes(null);
           setRobotStatus(null);
-          roomCodeFormik.setFieldValue("roomCode", "");
           break;
         default:
           break;
@@ -335,9 +288,17 @@ const Proxy = () => {
 
   return (
     <div>
-      <Container fluid className="d-grid h-100">
+      <Container fluid className="d-grid h-100 p-2">
         {!opmodes ? (
-          <RoomCodeForm formik={roomCodeFormik} />
+          <RoomCodeForm
+            error={roomCodeError}
+            handleRoomCode={(roomCode: string) => {
+              ws?.send(
+                JSON.stringify({ type: "joinroom", roomcode: roomCode })
+              );
+              setRoomCodeError(true);
+            }}
+          />
         ) : (
           <Container fluid className="d-grid">
             <Row>
@@ -456,4 +417,4 @@ const Proxy = () => {
   );
 };
 
-export default Proxy;
+export default Control;
