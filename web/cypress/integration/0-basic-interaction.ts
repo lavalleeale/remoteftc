@@ -44,9 +44,16 @@ describe("Basic Interaction", () => {
         cy.stub(win, "WebSocket").callsFake((url) => new WebSocket(url));
       },
     });
+    expect(localStorage.getItem("prevCodes")).to.be.null;
     cy.get('[href="#/control"]').click();
-    cy.get("#formRoomCode").type("111111");
-    cy.get(".btn").click();
+    cy.get("#formRoomCode").type("Test Room Code");
+    cy.get(".btn")
+      .click()
+      .should(() => {
+        expect(localStorage.getItem("prevCodes")).to.be.eq(
+          JSON.stringify(["Test Room Code"])
+        );
+      });
   });
   it("selects opmodes", () => {
     cy.waitFor(".form-select");
