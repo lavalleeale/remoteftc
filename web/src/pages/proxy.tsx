@@ -113,10 +113,10 @@ const Proxy = () => {
             validationSchema={roomCodeValidationSchema}
             initialValues={{ roomCode: "" }}
             onSubmit={(e) => {
-              setPrevCodes([...prevCodes!, e.roomCode]);
+              setPrevCodes([e.roomCode, ...prevCodes!].slice(0, 5));
               localStorage.setItem(
                 "prevCodes",
-                JSON.stringify([...prevCodes!, e.roomCode])
+                JSON.stringify([e.roomCode, ...prevCodes!].slice(0, 5))
               );
               ws?.send(JSON.stringify({ type: "proxy", code: e.roomCode }));
             }}
@@ -149,20 +149,24 @@ const Proxy = () => {
               </Form>
             )}
           </Formik>
-          {prevCodes && (
-            <ul>
-              {prevCodes.map((code) => (
-                <li key={code}>
-                  <a
-                    onClick={() =>
-                      ws?.send(JSON.stringify({ type: "proxy", code }))
-                    }
-                  >
-                    {code}
-                  </a>
-                </li>
-              ))}
-            </ul>
+          {prevCodes && prevCodes.length > 0 && (
+            <div>
+              Previous Codes
+              <ul>
+                {prevCodes.map((code) => (
+                  <li key={code}>
+                    <a
+                      href="javascript:"
+                      onClick={() =>
+                        ws?.send(JSON.stringify({ type: "proxy", code }))
+                      }
+                    >
+                      {code}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
           <Button
             onClick={() =>
