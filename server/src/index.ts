@@ -1,4 +1,4 @@
-import { Server, WebSocket } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 import { v4 as uuidv4 } from "uuid";
 
 declare class MyWebSocket extends WebSocket {
@@ -15,7 +15,7 @@ type room = {
 
 const rooms: room[] = [];
 
-const wss = new Server({ port: 4000 });
+const wss = new WebSocketServer({ port: 4000 });
 wss.on("connection", (ws: MyWebSocket) => {
   ws.uuid = uuidv4();
   console.log("connection");
