@@ -13,7 +13,7 @@
     "typescript": "^4.5.4"
   },
   "scripts": {
-    "build": "esbuild src/index.ts --platform=node --minify --bundle --outfile=dist/server.js",
+    "build": "esbuild src/index.ts --pure:console.log --platform=node --minify --bundle --outfile=dist/server.js",
     "start": "nodemon src/index.ts"
   }
 }
