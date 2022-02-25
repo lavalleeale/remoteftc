@@ -6,7 +6,6 @@ import { rooms } from ".";
 export function handleMessage(this: MyWebSocket, messageBuffer: RawData) {
   const message = messageBuffer.toString("utf-8");
   let genericData = JSON.parse(message) as clientToServer;
-  console.log(this, messageBuffer);
   if (genericData.type === "joinroom") {
     const data = genericData as joinRoom;
     const room = rooms.find((room) => room.code == data.roomcode);
@@ -49,7 +48,6 @@ export function handleMessage(this: MyWebSocket, messageBuffer: RawData) {
     );
     this.opmodes = [];
   } else if (this.uuid && this.room?.proxy.uuid === this.uuid) {
-    console.log(this.room?.proxy.uuid, this.uuid);
     this.room.clients.map((watcher) => watcher.send(message));
   } else if (this.room) {
     this.room.proxy?.send(message);

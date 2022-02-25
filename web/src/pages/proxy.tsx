@@ -1,15 +1,11 @@
-import { Button, Container, FloatingLabel, Form, Stack } from "react-bootstrap";
+import { Button, Card, Container } from "react-bootstrap";
 import React from "react";
 import { useEffect, useState } from "react";
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { emptyController } from "../shared/controller";
-import { Formik } from "formik";
 import * as Yup from "yup";
 import RoomCodeForm from "../components/RoomCodeForm";
-
-const roomCodeValidationSchema = Yup.object().shape({
-  roomCode: Yup.string().required("Please enter a room code"),
-});
+import PermissionsModal from "../components/PermissionsModal";
 
 const Proxy = () => {
   const [watcherCount, setWatcherCount] = useState(0);
@@ -17,6 +13,12 @@ const Proxy = () => {
   const [robotStatus, setRobotStatus] = useState(false);
   const [roomCodeError, setRoomCodeError] = useState(false);
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const [showingPermissions, setShowingPermissions] = useState(false);
+  const [permissions, setPermissions] = useState({
+    state: true,
+    controller1: true,
+    controller2: true,
+  });
 
   useEffect(() => {
     var robotControl: ReconnectingWebSocket | null;
@@ -42,13 +44,16 @@ const Proxy = () => {
           break;
         case "controller":
           if (data.number === 1) {
-            controller1 = data.data;
+            if (permissions.controller1) controller1 = data.data;
           } else {
-            controller2 = data.data;
+            if (permissions.controller2) controller2 = data.data;
           }
           break;
         default:
-          if (robotControl?.readyState === WebSocket.OPEN) {
+          if (
+            robotControl?.readyState === WebSocket.OPEN &&
+            permissions.state
+          ) {
             robotControl!.send(event.data);
           }
           break;
@@ -90,15 +95,35 @@ const Proxy = () => {
   return (
     <Container fluid className="d-grid h-100 p-2">
       {roomCode ? (
-        <ul className="list-group list-group-flush">
-          <li className="list-group-item">
-            Room code: {roomCode || "Room code not found!"}
-          </li>
-          <li className="list-group-item">Watchers: {watcherCount}</li>
-          <li className="list-group-item">
-            Robot status: {robotStatus ? "Connected" : "Disconnected"}
-          </li>
-        </ul>
+        <Card>
+          <PermissionsModal
+            permissions={permissions}
+            onSubmit={setPermissions}
+            show={showingPermissions}
+            handleClose={() => setShowingPermissions(false)}
+          />
+          <Card.Header as="h5" className="text-center">
+            Proxy Data
+            <Button
+              style={{ float: "right" }}
+              variant="link"
+              onClick={() => setShowingPermissions(true)}
+            >
+              <i className="icon bi-gear-wide-connected color-primary text-dark" />
+            </Button>
+          </Card.Header>
+          <Card.Body>
+            <ul className="list-group list-group-flush">
+              <li className="list-group-item">
+                Room code: {roomCode || "Room code not found!"}
+              </li>
+              <li className="list-group-item">Watchers: {watcherCount}</li>
+              <li className="list-group-item">
+                Robot status: {robotStatus ? "Connected" : "Disconnected"}
+              </li>
+            </ul>
+          </Card.Body>
+        </Card>
       ) : (
         <>
           <RoomCodeForm
