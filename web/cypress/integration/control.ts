@@ -20,20 +20,23 @@ describe("Basic Interaction", () => {
     console.log("connection");
     ws.on("message", (message) => {
       const decoded = JSON.parse(message as string);
-      console.log(decoded);
       switch (decoded.type) {
         case "joinroom":
           ws.send(JSON.stringify(opmodes));
-          ws.send(JSON.stringify(status.start));
+          ws.send(JSON.stringify(status.warning));
+          ws.send(JSON.stringify(status.error));
           break;
         case "INIT_OPMODE":
           ws.send(JSON.stringify(status.init));
+          ws.send(JSON.stringify(status.nonerror));
           break;
         case "START_OPMODE":
           ws.send(JSON.stringify(status.started));
+          ws.send(JSON.stringify(status.error));
+          ws.send(JSON.stringify(status.nonwarning));
           break;
         case "STOP_OPMODE":
-          ws.send(JSON.stringify(status.start));
+          ws.send(JSON.stringify(status.stop));
           break;
       }
     });

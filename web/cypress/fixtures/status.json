@@ -1,26 +1,42 @@
 {
-  "start": {
-    "errorMessage": "Fake Error Message",
-    "opModeName": "$Stop$Robot$",
-    "state": "RUNNING",
-    "status": "INIT",
-    "warningMessage": "Fake Warning Message",
-    "type": "SEND_STATUS"
+  "warning": {
+    "type": "telemetry",
+    "message": {
+      "tag": "$System$Warning$",
+      "dataStrings": [{ "value": "Fake Warning Message" }]
+    }
+  },
+  "error": {
+    "type": "telemetry",
+    "message": {
+      "tag": "$System$Error$",
+      "dataStrings": [{ "value": "Fake Error Message" }]
+    }
   },
   "init": {
-    "errorMessage": "",
-    "opModeName": "Final TeleOP",
-    "state": "RUNNING",
-    "status": "INIT",
-    "warningMessage": "Fake Warning Message",
-    "type": "SEND_STATUS"
+    "type": "activeOpmode",
+    "value": "Websocket Test"
+  },
+  "nonwarning": {
+    "type": "telemetry",
+    "message": {
+      "tag": "$System$Warning$",
+      "dataStrings": [{ "value": "" }]
+    }
+  },
+  "nonerror": {
+    "type": "telemetry",
+    "message": {
+      "tag": "$System$Error$",
+      "dataStrings": [{ "value": "" }]
+    }
   },
   "started": {
-    "errorMessage": "Fake Error Message",
-    "opModeName": "Final TeleOP",
-    "state": "RUNNING",
-    "status": "RUNNING",
-    "warningMessage": "",
-    "type": "SEND_STATUS"
+    "type": "runOpmode",
+    "message": "Websocket Test"
+  },
+  "stop": {
+    "type": "activeOpmode",
+    "value": "$Stop$Robot$"
   }
 }

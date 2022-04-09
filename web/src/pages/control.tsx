@@ -106,7 +106,6 @@ const Control = () => {
           if (controller.index === gamepad1) {
             setGamepad1(null);
             if (ws?.readyState === WebSocket.OPEN) {
-              // TODO: EMPTY???
               ws!.send(
                 JSON.stringify({
                   type: "controller",
