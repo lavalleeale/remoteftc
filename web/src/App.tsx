@@ -1,9 +1,9 @@
-import React from "react"
+import React, { Suspense } from "react";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import Home from "./pages";
 import Control from "./pages/control";
-import Proxy from "./pages/proxy";
+const Proxy = React.lazy(() => import("./pages/proxy"));
 
 function App() {
   return (
@@ -11,7 +11,14 @@ function App() {
       <Header />
       <Routes>
         <Route path="/control" element={<Control />} />
-        <Route path="/proxy" element={<Proxy />} />
+        <Route
+          path="/proxy"
+          element={
+            <Suspense fallback={<p>Loading</p>}>
+              <Proxy />
+            </Suspense>
+          }
+        />
         <Route path="/" element={<Home />} />
       </Routes>
     </Router>

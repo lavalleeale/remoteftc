@@ -1,9 +1,15 @@
 /**
  * @type {import('vite').UserConfig}
  */
- export default {
-  server:{
-    port:3000
+import commonjsExternals from "vite-plugin-commonjs-externals";
+export default {
+  server: {
+    port: 3000,
   },
-  base: ''
-}
+  base: "",
+  plugins: [
+    commonjsExternals({
+      externals: ["path", "robocol"],
+    }),
+  ],
+};
