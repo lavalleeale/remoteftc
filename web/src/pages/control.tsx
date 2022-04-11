@@ -1,50 +1,22 @@
-import { Alert, Button, Container, Row, Col, Card } from "react-bootstrap";
-import * as Yup from "yup";
-import { useFormik } from "formik";
+import { Container, Row, Col } from "react-bootstrap";
 import React, { useState, useEffect } from "react";
 import { emptyController } from "../shared/controller";
 import { groupBy, map } from "lodash";
 import RoomCodeForm from "../components/RoomCodeForm";
-import OpmodeForm from "../components/OpmodeForm";
-import ServerData from "../components/ServerData";
-import OpmodesFilter from "../components/OpmodesFilter";
 import { controllerFromGamepad } from "../../helpers/controller";
-
-const opmodeValidationSchema = Yup.object().shape({
-  selectedOpmode: Yup.string()
-    .required("A valid Opmode must be selected")
-    .notOneOf(["", "$Stop$Robot$"], "A valid Opmode must be selected"),
-});
+import RobotLog from "../components/RobotLog";
+import RobotData from "../components/RobotData";
+import OpmodeControls from "../components/OpmodeControls";
 
 const Control = () => {
   const [gamepad1, setGamepad1] = useState<number | null>(null);
   const [gamepad2, setGamepad2] = useState<number | null>(null);
   const [roomCodeError, setRoomCodeError] = useState(false);
-  const [filter, setFilter] = useState<filter>({
-    flavor: { TELEOP: false, AUTONOMOUS: false },
-    groups: [],
-  });
   const [opmodes, setOpmodes] = useState<opmodeGroup[] | null>(null);
   const [robotStatus, setRobotStatus] = useState<robotStatus>({});
   const [ws, setWs] = useState<WebSocket | null>(null);
-  const [showingFilter, setShowingFilter] = useState(false);
   const [log, setLog] = useState<string[]>([]);
-
-  const opmodeFormik = useFormik({
-    validationSchema: opmodeValidationSchema,
-    onSubmit: (values) => {
-      ws?.send(
-        JSON.stringify({
-          type: "INIT_OPMODE",
-          opModeName: values.selectedOpmode,
-        })
-      );
-    },
-    initialValues: {
-      selectedOpmode: "$Stop$Robot$",
-    },
-    validateOnMount: false,
-  });
+  const [selectedOpmode, setSelectedOpmode] = useState("$Stop$Robot$");
 
   useEffect(() => {
     const removeGamepad = (e: GamepadEventInit) => {
@@ -157,9 +129,6 @@ const Control = () => {
           : "ws://localhost:4000"
       }/custom`
     );
-    if (window.localStorage.getItem("filter")) {
-      setFilter(JSON.parse(window.localStorage.getItem("filter")!));
-    }
     ws.addEventListener("message", function (event) {
       const data = JSON.parse(event.data);
       switch (data.type) {
@@ -196,7 +165,7 @@ const Control = () => {
           setRobotStatus(lastStatus);
           if (data.value !== lastOpMode) {
             lastOpMode = data.value;
-            opmodeFormik.setFieldValue("selectedOpmode", data.value);
+            setSelectedOpmode(data.value);
           }
           break;
         case "runOpmode":
@@ -257,126 +226,21 @@ const Control = () => {
           <Container fluid className="d-grid">
             <Row>
               <Col>
-                <Card className="w-100 h-100 m-3">
-                  <Card.Header as="h5" className="text-center">
-                    Opmode Controls
-                    <Button
-                      style={{ float: "right" }}
-                      variant="link"
-                      onClick={() => setShowingFilter(true)}
-                    >
-                      <i className="icon bi-gear-wide-connected color-primary text-dark" />
-                    </Button>
-                  </Card.Header>
-                  <Card.Body>
-                    <Container fluid className="d-grid">
-                      <OpmodesFilter
-                        showingFilter={showingFilter}
-                        setShowingFilter={setShowingFilter}
-                        opmodes={opmodes}
-                        initialFilter={filter}
-                        applyFilter={(newFilter: filter, persist: boolean) => {
-                          setShowingFilter(false);
-                          setFilter(newFilter);
-                          if (persist) {
-                            window.localStorage.setItem(
-                              "filter",
-                              JSON.stringify(newFilter)
-                            );
-                          }
-                        }}
-                      />
-                      <Row>
-                        <OpmodeForm
-                          formik={opmodeFormik}
-                          opmodes={opmodes}
-                          robotStatus={robotStatus}
-                          filter={filter}
-                        />
-                      </Row>
-                      {robotStatus?.opModeName &&
-                        robotStatus.opModeName !== "$Stop$Robot$" && (
-                          <Row>
-                            {robotStatus?.status !== "STOPPED" ? (
-                              <>
-                                <Button
-                                  className="w-50"
-                                  variant="success"
-                                  disabled={robotStatus.status === "RUNNING"}
-                                  onClick={() => {
-                                    ws!.send(
-                                      JSON.stringify({
-                                        type: "START_OPMODE",
-                                      })
-                                    );
-                                  }}
-                                >
-                                  Start
-                                </Button>
-                                <Button
-                                  className="w-50"
-                                  variant="danger"
-                                  onClick={() => {
-                                    ws!.send(
-                                      JSON.stringify({
-                                        type: "STOP_OPMODE",
-                                      })
-                                    );
-                                  }}
-                                >
-                                  Stop
-                                </Button>
-                              </>
-                            ) : (
-                              <Button variant="danger w-100" disabled>
-                                STOPPED
-                              </Button>
-                            )}
-                          </Row>
-                        )}
-                      <ServerData gamepad1={gamepad1} gamepad2={gamepad2} />
-                    </Container>
-                  </Card.Body>
-                </Card>
+                <OpmodeControls
+                  selectedOpmode={selectedOpmode}
+                  opmodes={opmodes}
+                  robotStatus={robotStatus}
+                  gamepad1={gamepad1}
+                  gamepad2={gamepad2}
+                  send={(toSend: object) => ws?.send(JSON.stringify(toSend))}
+                />
               </Col>
               <Col>
-                <Card className="w-100 h-100 m-3">
-                  <Card.Header as="h5" className="text-center">
-                    Robot Data
-                  </Card.Header>
-                  <Card.Body>
-                    State: {robotStatus?.status || "Unknown"}
-                    {robotStatus?.warningMessage && (
-                      <Col className="text-center">
-                        <Alert variant="warning">
-                          Warning: {robotStatus?.warningMessage}
-                        </Alert>
-                      </Col>
-                    )}
-                    {robotStatus?.errorMessage && (
-                      <Col className="text-center">
-                        <Alert variant="danger">
-                          Error: {robotStatus?.errorMessage}
-                        </Alert>
-                      </Col>
-                    )}
-                  </Card.Body>
-                </Card>
+                <RobotData robotStatus={robotStatus} />
               </Col>
             </Row>
             <Row className="m-3 pt-3">
-              <Card className="w-100 h-100">
-                <Card.Header as="h5" className="text-center">
-                  Log
-                </Card.Header>
-                <Card.Body>
-                  <ul>
-                    {log.map((element, index) => (
-                      <li key={index}>{element}</li>
-                    ))}
-                  </ul>
-                </Card.Body>
-              </Card>
+              <RobotLog log={log} />
             </Row>
           </Container>
         )}

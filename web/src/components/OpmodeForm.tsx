@@ -1,4 +1,5 @@
-import { FormikErrors } from "formik";
+import { Formik } from "formik";
+import * as Yup from "yup";
 import React from "react";
 import { Form, FloatingLabel, Button, Row } from "react-bootstrap";
 
@@ -14,70 +15,97 @@ function applyFilter(groups: opmodeGroup[], filter: filter) {
     );
 }
 
+const opmodeValidationSchema = Yup.object().shape({
+  selectedOpmode: Yup.string()
+    .required("A valid Opmode must be selected")
+    .notOneOf(["", "$Stop$Robot$"], "A valid Opmode must be selected"),
+});
+
 const OpmodeForm = ({
-  formik,
   opmodes,
   robotStatus,
   filter,
+  send,
+  selectedOpmode,
 }: {
-  formik: {
-    handleChange: (e: React.ChangeEvent<any>) => void;
-    handleSubmit: (e?: React.FormEvent<HTMLFormElement> | undefined) => void;
-    values: { selectedOpmode: string };
-    errors: FormikErrors<{ selectedOpmode: string }>;
-  };
   opmodes: opmodeGroup[];
   robotStatus: robotStatus | null;
   filter: filter;
+  send: (arg0: object) => void;
+  selectedOpmode: string;
 }) => {
   return (
-    <Form
-      onSubmit={formik.handleSubmit}
-      className="text-center w-100 p-0 mb-3 pt-3 d-flex"
+    <Formik
+      validationSchema={opmodeValidationSchema}
+      onSubmit={(values) => {
+        send({
+          type: "INIT_OPMODE",
+          opModeName: values.selectedOpmode,
+        });
+      }}
+      initialValues={{
+        selectedOpmode: "$Stop$Robot$",
+      }}
+      validateOnMount={false}
     >
-      <FloatingLabel
-        className={
-          robotStatus?.opModeName === undefined ||
-          robotStatus.opModeName === "$Stop$Robot$"
-            ? "w-75"
-            : "w-100"
-        }
-        label="Select Opmode"
-      >
-        <Form.Select
-          isInvalid={formik.errors.selectedOpmode != undefined}
-          name="selectedOpmode"
-          onChange={formik.handleChange}
-          value={formik.values.selectedOpmode}
-          disabled={opmodes === undefined}
-        >
-          <option value="$Stop$Robot$">None</option>
-          {applyFilter(opmodes, filter).map((group) => (
-            <optgroup label={group.groupName} key={group.groupName}>
-              {group.opmodes.map((opmode) => (
-                <option value={opmode.name} key={opmode.name}>
-                  {opmode.name}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </Form.Select>
-        <Form.Control.Feedback type="invalid">
-          {formik.errors.selectedOpmode}
-        </Form.Control.Feedback>
-      </FloatingLabel>
-      {(robotStatus?.opModeName === undefined ||
-        robotStatus.opModeName === "$Stop$Robot$") && (
-        <Button
-          className="w-25"
-          style={{ height: "calc(3.5rem + 2px)" }}
-          variant="primary"
-          type="submit"
-        >
-          Init
-        </Button>
-      )}
-    </Form>
+      {({ handleSubmit, errors, handleChange, values, setFieldValue }) => {
+        React.useEffect(() => {
+          if (selectedOpmode !== values.selectedOpmode) {
+            setFieldValue("selectedOpmode", selectedOpmode);
+          }
+        }, [selectedOpmode]);
+
+        return (
+          <Form
+            onSubmit={handleSubmit}
+            className="text-center w-100 p-0 mb-3 pt-3 d-flex"
+          >
+            <FloatingLabel
+              className={
+                robotStatus?.opModeName === undefined ||
+                robotStatus.opModeName === "$Stop$Robot$"
+                  ? "w-75"
+                  : "w-100"
+              }
+              label="Select Opmode"
+            >
+              <Form.Select
+                isInvalid={errors.selectedOpmode != undefined}
+                name="selectedOpmode"
+                onChange={handleChange}
+                value={values.selectedOpmode}
+                disabled={opmodes === undefined}
+              >
+                <option value="$Stop$Robot$">None</option>
+                {applyFilter(opmodes, filter).map((group) => (
+                  <optgroup label={group.groupName} key={group.groupName}>
+                    {group.opmodes.map((opmode) => (
+                      <option value={opmode.name} key={opmode.name}>
+                        {opmode.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                {errors.selectedOpmode}
+              </Form.Control.Feedback>
+            </FloatingLabel>
+            {(robotStatus?.opModeName === undefined ||
+              robotStatus.opModeName === "$Stop$Robot$") && (
+              <Button
+                className="w-25"
+                style={{ height: "calc(3.5rem + 2px)" }}
+                variant="primary"
+                type="submit"
+              >
+                Init
+              </Button>
+            )}
+          </Form>
+        );
+      }}
+    </Formik>
   );
 };
 
