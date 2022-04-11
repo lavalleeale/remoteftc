@@ -1,9 +1,15 @@
+type robotState =
+  | "Unknown"
+  | "NOT_STARTED"
+  | "INIT"
+  | "RUNNING"
+  | "STOPPED"
+  | "EMERGENCY_STOP";
 type robotStatus = {
-  opModeName: string;
-  status: "RUNNING" | "INIT" | "STOPPED";
-  errorMessage: string;
-  warningMessage: string;
-  state: string;
+  opModeName?: string;
+  status?: robotState;
+  errorMessage?: string;
+  warningMessage?: string;
 };
 type opmode = {
   flavor: "TELEOP" | "AUTONOMOUS";

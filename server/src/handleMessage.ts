@@ -13,6 +13,9 @@ export function handleMessage(this: MyWebSocket, messageBuffer: RawData) {
       room.clients.push(this);
       this.room = room;
       this.send(JSON.stringify({ type: "opmodes", value: room.proxy.opmodes }));
+      this.send(
+        JSON.stringify({ type: "activeOpmode", value: room.proxy.activeOpmode })
+      );
       room.proxy.send(
         JSON.stringify({
           type: "watcherCount",
@@ -20,11 +23,17 @@ export function handleMessage(this: MyWebSocket, messageBuffer: RawData) {
         })
       );
     }
-  } else if (genericData.type === "SEND_OPMODES") {
-    const data = genericData as opmodes;
-    this.opmodes = data.opmodes;
+  } else if (genericData.type === "opmodesList") {
+    const opmodes = genericData.message;
+    this.opmodes = opmodes;
     this.room?.clients?.map((watcher) =>
-      watcher.send(JSON.stringify({ type: "opmodes", value: data.opmodes }))
+      watcher.send(JSON.stringify({ type: "opmodes", value: opmodes }))
+    );
+  } else if (genericData.type === "activeOpmode") {
+    const opmode = genericData.message;
+    this.activeOpmode = opmode;
+    this.room?.clients?.map((watcher) =>
+      watcher.send(JSON.stringify({ type: "activeOpmode", value: opmode }))
     );
   } else if (genericData.type === "proxy") {
     const data = genericData as proxy;
@@ -34,7 +43,9 @@ export function handleMessage(this: MyWebSocket, messageBuffer: RawData) {
     } else {
       code =
         data.code === "random"
-          ? Math.floor(100000 + Math.random() * 900000)
+          ? process.env.NODE_ENV === "production"
+            ? Math.floor(100000 + Math.random() * 900000)
+            : 111111
           : data.code;
     }
     const room = { proxy: this, clients: [], code: code };

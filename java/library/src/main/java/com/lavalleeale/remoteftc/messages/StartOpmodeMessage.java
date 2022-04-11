@@ -1,6 +1,0 @@
-package com.lavalleeale.remoteftc.messages;
-
-import com.lavalleeale.remoteftc.Message;
-
-public class StartOpmodeMessage extends Message {
-}

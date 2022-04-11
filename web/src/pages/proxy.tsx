@@ -1,11 +1,15 @@
 import { Button, Card, Container } from "react-bootstrap";
 import React from "react";
 import { useEffect, useState } from "react";
-import ReconnectingWebSocket from "reconnecting-websocket";
-import { emptyController } from "../shared/controller";
-import * as Yup from "yup";
 import RoomCodeForm from "../components/RoomCodeForm";
 import PermissionsModal from "../components/PermissionsModal";
+import {
+  CommandMessage,
+  GamepadMessage,
+  Robot,
+  RobotCommand,
+  RobotEvent,
+} from "robocol";
 
 const Proxy = () => {
   const [watcherCount, setWatcherCount] = useState(0);
@@ -21,9 +25,8 @@ const Proxy = () => {
   });
 
   useEffect(() => {
-    var robotControl: ReconnectingWebSocket | null;
-    var controller1 = emptyController;
-    var controller2 = emptyController;
+    var opmodeName = "$Stop$Robot$";
+    var robot: Robot | null;
     const ws = new WebSocket(
       `${
         process.env.NODE_ENV === "production"
@@ -36,6 +39,9 @@ const Proxy = () => {
       const data = JSON.parse(event.data);
       switch (data.type) {
         case "roomcode":
+          if (!robot?.connected) {
+            robot?.connect();
+          }
           setRoomCode(data.value);
           setRoomCodeError(false);
           break;
@@ -44,51 +50,76 @@ const Proxy = () => {
           break;
         case "controller":
           if (data.number === 1) {
-            if (permissions.controller1) controller1 = data.data;
+            if (permissions.controller1)
+              robot?.send(new GamepadMessage(0, data.data, 1));
           } else {
-            if (permissions.controller2) controller2 = data.data;
+            if (permissions.controller2)
+              robot?.send(new GamepadMessage(0, data.data, 1));
           }
           break;
+        case "INIT_OPMODE":
+          opmodeName = data.opModeName;
+          robot?.send(
+            new CommandMessage(
+              RobotCommand.CMD_INIT_OP_MODE,
+              10,
+              false,
+              Date.now(),
+              data.opModeName
+            )
+          );
+          break;
+        case "START_OPMODE":
+          robot?.send(
+            new CommandMessage(
+              RobotCommand.CMD_RUN_OP_MODE,
+              10,
+              false,
+              Date.now(),
+              opmodeName
+            )
+          );
+          break;
+        case "STOP_OPMODE":
+          robot?.send(
+            new CommandMessage(
+              RobotCommand.CMD_INIT_OP_MODE,
+              10,
+              false,
+              Date.now(),
+              "$Stop$Robot$"
+            )
+          );
+          break;
         default:
-          if (
-            robotControl?.readyState === WebSocket.OPEN &&
-            permissions.state
-          ) {
-            robotControl!.send(event.data);
-          }
+          console.log("Unknown update", event.data);
           break;
       }
     });
     ws.addEventListener("open", () => {
-      const ROBOT_ADDRESS = "192.168.43.1";
-      robotControl = new ReconnectingWebSocket(`ws://${ROBOT_ADDRESS}:6969`);
-      robotControl.addEventListener("open", function (event) {
-        setRobotStatus(true);
+      robot = new Robot();
+      robot.on(RobotEvent.TELEMETRY, (message) => {
+        ws.send(JSON.stringify({ type: RobotEvent.TELEMETRY, message }));
       });
-      robotControl.addEventListener("close", function (event) {
-        setRobotStatus(false);
+      robot.on(RobotEvent.OPMODES_LIST, (message) => {
+        ws.send(JSON.stringify({ type: RobotEvent.OPMODES_LIST, message }));
       });
-      robotControl.addEventListener("message", function (event) {
-        ws!.send(event.data);
+      robot.on(RobotEvent.ACTIVE_OPMODE, (message) => {
+        ws.send(JSON.stringify({ type: RobotEvent.ACTIVE_OPMODE, message }));
+      });
+      robot.on(RobotEvent.TOAST, (message) => {
+        console.log(message);
+        ws.send(JSON.stringify({ type: RobotEvent.TOAST, message }));
+      });
+      robot.on(RobotEvent.CONNECTION, setRobotStatus);
+      robot.on(RobotEvent.RUN_OPMODE, (message) => {
+        ws.send(JSON.stringify({ type: RobotEvent.RUN_OPMODE, message }));
       });
     });
-    var interval: NodeJS.Timer;
-    interval = setInterval(() => {
-      if (robotControl?.readyState === WebSocket.OPEN) {
-        robotControl.send(
-          JSON.stringify({
-            type: "RECEIVE_GAMEPAD_STATE",
-            gamepad1: controller1,
-            gamepad2: controller2,
-          })
-        );
-      }
-    }, 50);
     return () => {
       ws.close();
-      robotControl?.close();
+      robot?.close();
       setRobotStatus(false);
-      clearInterval(interval);
     };
   }, []);
 

@@ -37,7 +37,8 @@ const OpmodeForm = ({
     >
       <FloatingLabel
         className={
-          robotStatus === null || robotStatus?.opModeName === "$Stop$Robot$"
+          robotStatus?.opModeName === undefined ||
+          robotStatus.opModeName === "$Stop$Robot$"
             ? "w-75"
             : "w-100"
         }
@@ -65,7 +66,8 @@ const OpmodeForm = ({
           {formik.errors.selectedOpmode}
         </Form.Control.Feedback>
       </FloatingLabel>
-      {(robotStatus === null || robotStatus?.opModeName === "$Stop$Robot$") && (
+      {(robotStatus?.opModeName === undefined ||
+        robotStatus.opModeName === "$Stop$Robot$") && (
         <Button
           className="w-25"
           style={{ height: "calc(3.5rem + 2px)" }}

@@ -2,17 +2,13 @@ import { Alert, Button, Container, Row, Col, Card } from "react-bootstrap";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import React, { useState, useEffect } from "react";
-import { controller, emptyController } from "../shared/controller";
+import { emptyController } from "../shared/controller";
 import { groupBy, map } from "lodash";
 import RoomCodeForm from "../components/RoomCodeForm";
 import OpmodeForm from "../components/OpmodeForm";
 import ServerData from "../components/ServerData";
 import OpmodesFilter from "../components/OpmodesFilter";
 import { controllerFromGamepad } from "../../helpers/controller";
-
-const roomCodeValidationSchema = Yup.object().shape({
-  roomCode: Yup.string().required("Please enter a room code"),
-});
 
 const opmodeValidationSchema = Yup.object().shape({
   selectedOpmode: Yup.string()
@@ -28,14 +24,11 @@ const Control = () => {
     flavor: { TELEOP: false, AUTONOMOUS: false },
     groups: [],
   });
-  const [kbController, setKbController] = useState<controller>({
-    ...emptyController,
-    index: 5,
-  });
   const [opmodes, setOpmodes] = useState<opmodeGroup[] | null>(null);
-  const [robotStatus, setRobotStatus] = useState<robotStatus | null>(null);
+  const [robotStatus, setRobotStatus] = useState<robotStatus>({});
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [showingFilter, setShowingFilter] = useState(false);
+  const [log, setLog] = useState<string[]>([]);
 
   const opmodeFormik = useFormik({
     validationSchema: opmodeValidationSchema,
@@ -62,7 +55,7 @@ const Control = () => {
             JSON.stringify({
               type: "controller",
               number: 1,
-              data: emptyController,
+              data: { ...emptyController, updatedAt: Date.now() },
             })
           );
         }
@@ -73,7 +66,7 @@ const Control = () => {
             JSON.stringify({
               type: "controller",
               number: 2,
-              data: emptyController,
+              data: { ...emptyController, updatedAt: Date.now() },
             })
           );
         }
@@ -86,90 +79,13 @@ const Control = () => {
   }, [gamepad1, gamepad2, ws]);
 
   useEffect(() => {
-    function setKey(key: String, float: number, bool: boolean) {
-      switch (key) {
-        case "w":
-          setKbController({ ...kbController, left_stick_y: float });
-          break;
-        case "s":
-          setKbController({ ...kbController, left_stick_y: -float });
-          break;
-        case "a":
-          setKbController({ ...kbController, left_stick_x: -float });
-          break;
-        case "d":
-          setKbController({ ...kbController, left_stick_x: float });
-          break;
-        case "ArrowUp":
-          setKbController({ ...kbController, right_stick_y: float });
-          break;
-        case "ArrowDown":
-          setKbController({ ...kbController, right_stick_y: -float });
-          break;
-        case "ArrowLeft":
-          setKbController({ ...kbController, right_stick_x: -float });
-          break;
-        case "ArrowRight":
-          setKbController({ ...kbController, right_stick_x: float });
-          break;
-        case "q":
-          setKbController({ ...kbController, left_trigger: float });
-          break;
-        case "e":
-          setKbController({ ...kbController, right_trigger: float });
-          break;
-        case "\\":
-          setKbController({ ...kbController, back: bool });
-          break;
-        case "Enter":
-          setKbController({ ...kbController, start: bool });
-          break;
-        case "z":
-          setKbController({ ...kbController, a: bool });
-          break;
-        case "x":
-          setKbController({ ...kbController, b: bool });
-          break;
-        case "c":
-          setKbController({ ...kbController, x: bool });
-          break;
-        case "v":
-          setKbController({ ...kbController, y: bool });
-          break;
-        case "n":
-          setKbController({ ...kbController, left_bumper: bool });
-          break;
-        case "m":
-          setKbController({ ...kbController, right_bumper: bool });
-          break;
-        default:
-          break;
-      }
-    }
-    function keyPress(e: KeyboardEvent) {
-      if (!e.repeat) {
-        setKey(e.key, 0.5, true);
-      }
-    }
-    function keyRelease(e: KeyboardEvent) {
-      setKey(e.key, 0, false);
-    }
-    window.addEventListener("keydown", keyPress, false);
-    window.addEventListener("keyup", keyRelease, false);
-    return () => {
-      window.removeEventListener("keydown", keyPress, false);
-      window.removeEventListener("keyup", keyRelease, false);
-    };
-  }, [kbController]);
-
-  useEffect(() => {
     const interval = setInterval(() => {
       [
-        ...Object.values(navigator.getGamepads())
-          .filter((gamepad) => gamepad !== null)
-          .map((gamepad) => controllerFromGamepad(gamepad!)),
-        kbController,
-      ].forEach((controller) => {
+        ...Object.values(navigator.getGamepads()).filter(
+          (gamepad) => gamepad !== null
+        ),
+      ].forEach((gamepad) => {
+        const controller = controllerFromGamepad(gamepad!);
         if (controller.start && controller.a) {
           setGamepad1(controller.index);
           if (controller.index === gamepad2) {
@@ -178,7 +94,7 @@ const Control = () => {
                 JSON.stringify({
                   type: "controller",
                   number: 2,
-                  data: emptyController,
+                  data: { ...emptyController, updatedAt: Date.now() },
                 })
               );
             }
@@ -194,7 +110,7 @@ const Control = () => {
                 JSON.stringify({
                   type: "controller",
                   number: 1,
-                  data: emptyController,
+                  data: { ...emptyController, updatedAt: Date.now() },
                 })
               );
             }
@@ -208,7 +124,7 @@ const Control = () => {
                 JSON.stringify({
                   type: "controller",
                   number: 1,
-                  data: controller,
+                  data: { ...controller, updatedAt: Date.now() },
                 })
               );
             }
@@ -218,7 +134,7 @@ const Control = () => {
                 JSON.stringify({
                   type: "controller",
                   number: 2,
-                  data: controller,
+                  data: { ...controller, updatedAt: Date.now() },
                 })
               );
             }
@@ -229,9 +145,10 @@ const Control = () => {
     return () => {
       clearInterval(interval);
     };
-  }, [gamepad1, gamepad2, ws, kbController]);
+  }, [gamepad1, gamepad2, ws]);
 
   useEffect(() => {
+    let lastStatus: robotStatus = {};
     var lastOpMode = "$Stop$Robot$";
     const ws = new WebSocket(
       `${
@@ -246,12 +163,49 @@ const Control = () => {
     ws.addEventListener("message", function (event) {
       const data = JSON.parse(event.data);
       switch (data.type) {
-        case "SEND_STATUS":
-          setRobotStatus(data);
-          if (data.opModeName && data.opModeName !== lastOpMode) {
-            lastOpMode = data.opModeName;
-            opmodeFormik.setFieldValue("selectedOpmode", data.opModeName);
+        case "telemetry":
+          if (data.message.tag === "$System$Warning$") {
+            lastStatus = {
+              ...lastStatus,
+              warningMessage: data.message.dataStrings[0].value,
+            };
+            setRobotStatus(lastStatus);
+          } else if (data.message.tag === "$System$Error$") {
+            lastStatus = {
+              ...lastStatus,
+              errorMessage: data.message.dataStrings[0].value,
+            };
+            setRobotStatus(lastStatus);
+          } else {
+            const log = (
+              data.message.dataStrings as { key: string; value: string }[]
+            )
+              .filter((dataString) => dataString.key === "log")
+              .map((dataString) => dataString.value);
+            if (log.length !== 0) {
+              setLog(log);
+            }
           }
+          break;
+        case "activeOpmode":
+          lastStatus = {
+            ...lastStatus,
+            status: "INIT",
+            opModeName: data.value,
+          };
+          setRobotStatus(lastStatus);
+          if (data.value !== lastOpMode) {
+            lastOpMode = data.value;
+            opmodeFormik.setFieldValue("selectedOpmode", data.value);
+          }
+          break;
+        case "runOpmode":
+          lastStatus = {
+            ...lastStatus,
+            status: "RUNNING",
+            opModeName: data.message,
+          };
+          setRobotStatus(lastStatus);
           break;
         case "opmodes":
           setRoomCodeError(false);
@@ -273,7 +227,7 @@ const Control = () => {
           break;
         case "disconnect":
           setOpmodes(null);
-          setRobotStatus(null);
+          setRobotStatus({});
           break;
         default:
           break;
@@ -340,8 +294,8 @@ const Control = () => {
                           filter={filter}
                         />
                       </Row>
-                      {robotStatus !== null &&
-                        robotStatus?.opModeName !== "$Stop$Robot$" && (
+                      {robotStatus?.opModeName &&
+                        robotStatus.opModeName !== "$Stop$Robot$" && (
                           <Row>
                             {robotStatus?.status !== "STOPPED" ? (
                               <>
@@ -391,7 +345,7 @@ const Control = () => {
                     Robot Data
                   </Card.Header>
                   <Card.Body>
-                    State: {robotStatus?.state || "Unknown"}
+                    State: {robotStatus?.status || "Unknown"}
                     {robotStatus?.warningMessage && (
                       <Col className="text-center">
                         <Alert variant="warning">
@@ -409,6 +363,20 @@ const Control = () => {
                   </Card.Body>
                 </Card>
               </Col>
+            </Row>
+            <Row className="m-3 pt-3">
+              <Card className="w-100 h-100">
+                <Card.Header as="h5" className="text-center">
+                  Log
+                </Card.Header>
+                <Card.Body>
+                  <ul>
+                    {log.map((element, index) => (
+                      <li key={index}>{element}</li>
+                    ))}
+                  </ul>
+                </Card.Body>
+              </Card>
             </Row>
           </Container>
         )}

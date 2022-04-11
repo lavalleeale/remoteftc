@@ -3,6 +3,7 @@ import { WebSocket } from "ws";
 export declare class MyWebSocket extends WebSocket {
   uuid: string;
   opmodes: opmode[] | null;
+  activeOpmode: string | null;
   room: room | null;
 }
 
@@ -12,14 +13,18 @@ export type room = {
   code: string | number;
 };
 
-export type clientToServer = joinRoom | opmodes | proxy;
+export type clientToServer = joinRoom | opmodes | proxy | activeOpmode;
 export type joinRoom = {
   type: "joinroom";
   roomcode: string | number;
 };
+export type activeOpmode = {
+  type: "activeOpmode";
+  message: any;
+};
 export type opmodes = {
-  type: "SEND_OPMODES";
-  opmodes: opmode[];
+  type: "opmodesList";
+  message: opmode[];
 };
 export type proxy = {
   type: "proxy";
@@ -29,5 +34,4 @@ export type opmode = {
   flavor: "TELEOP" | "AUTONOMOUS";
   group: String;
   name: String;
-  source: undefined | "ANDROID_STUDIO" | "BLOCKLY" | "ONBOTJAVA";
 };
