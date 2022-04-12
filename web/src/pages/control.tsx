@@ -1,4 +1,4 @@
-import { Container, Row, Col } from "react-bootstrap";
+import { Container, Row, Col, Toast } from "react-bootstrap";
 import React, { useState, useEffect } from "react";
 import { emptyController } from "../shared/controller";
 import { groupBy, map } from "lodash";
@@ -17,6 +17,7 @@ const Control = () => {
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const [selectedOpmode, setSelectedOpmode] = useState("$Stop$Robot$");
+  const [toasts, setToasts] = useState<{ message: string; time: Date }[]>([]);
 
   useEffect(() => {
     const removeGamepad = (e: GamepadEventInit) => {
@@ -121,7 +122,8 @@ const Control = () => {
 
   useEffect(() => {
     let lastStatus: robotStatus = {};
-    var lastOpMode = "$Stop$Robot$";
+    let toasts: { message: string; time: Date }[] = [];
+    let lastOpMode = "$Stop$Robot$";
     const ws = new WebSocket(
       `${
         process.env.NODE_ENV === "production"
@@ -176,6 +178,13 @@ const Control = () => {
           };
           setRobotStatus(lastStatus);
           break;
+        case "toast":
+          toasts = [
+            { message: data.message.message, time: new Date() },
+            ...toasts.slice(0, 4),
+          ];
+          setToasts(toasts);
+          break;
         case "opmodes":
           setRoomCodeError(false);
           const groups = groupBy(
@@ -211,6 +220,20 @@ const Control = () => {
 
   return (
     <div>
+      {toasts.map((toast, index) => (
+        <Toast
+          style={{ position: "absolute", bottom: 10 + index * 100, right: 10 }}
+          onClose={() => {
+            setToasts([...toasts.slice(0, index), ...toasts.slice(index + 1)]);
+          }}
+        >
+          <Toast.Header>
+            <strong className="me-auto">Message From Robot</strong>
+            <small>At {toast.time.toLocaleTimeString()}</small>
+          </Toast.Header>
+          <Toast.Body>{toast.message}</Toast.Body>
+        </Toast>
+      ))}
       <Container fluid className="d-grid h-100 p-2">
         {!opmodes ? (
           <RoomCodeForm
