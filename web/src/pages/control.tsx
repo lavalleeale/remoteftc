@@ -1,12 +1,12 @@
-import { Container, Row, Col, Toast } from "react-bootstrap";
-import React, { useState, useEffect } from "react";
-import { emptyController } from "../shared/controller";
 import { groupBy, map } from "lodash";
-import RoomCodeForm from "../components/RoomCodeForm";
+import React, { useEffect, useState } from "react";
+import { Col, Container, Row, Toast } from "react-bootstrap";
 import { controllerFromGamepad } from "../../helpers/controller";
-import RobotLog from "../components/RobotLog";
-import RobotData from "../components/RobotData";
 import OpmodeControls from "../components/OpmodeControls";
+import RobotData from "../components/RobotData";
+import RobotLog from "../components/RobotLog";
+import RoomCodeForm from "../components/RoomCodeForm";
+import { emptyController } from "../shared/controller";
 
 const Control = () => {
   const [gamepad1, setGamepad1] = useState<number | null>(null);
@@ -52,6 +52,8 @@ const Control = () => {
   }, [gamepad1, gamepad2, ws]);
 
   useEffect(() => {
+    let lastUpdatedController1 = 0;
+    let lastUpdatedController2 = 0;
     const interval = setInterval(() => {
       [
         ...Object.values(navigator.getGamepads()).filter(
@@ -93,23 +95,35 @@ const Control = () => {
         } else {
           if (controller.index === gamepad1) {
             if (ws?.readyState === WebSocket.OPEN) {
-              ws.send(
-                JSON.stringify({
-                  type: "controller",
-                  number: 1,
-                  data: { ...controller, updatedAt: Date.now() },
-                })
-              );
+              if (
+                gamepad?.timestamp &&
+                gamepad.timestamp > lastUpdatedController1
+              ) {
+                lastUpdatedController1 = gamepad.timestamp;
+                ws.send(
+                  JSON.stringify({
+                    type: "controller",
+                    number: 1,
+                    data: { ...controller, updatedAt: Date.now() },
+                  })
+                );
+              }
             }
           } else if (controller.index === gamepad2) {
             if (ws?.readyState === WebSocket.OPEN) {
-              ws.send(
-                JSON.stringify({
-                  type: "controller",
-                  number: 2,
-                  data: { ...controller, updatedAt: Date.now() },
-                })
-              );
+              if (
+                gamepad?.timestamp &&
+                gamepad.timestamp > lastUpdatedController2
+              ) {
+                lastUpdatedController2 = gamepad.timestamp;
+                ws.send(
+                  JSON.stringify({
+                    type: "controller",
+                    number: 2,
+                    data: { ...controller, updatedAt: Date.now() },
+                  })
+                );
+              }
             }
           }
         }
